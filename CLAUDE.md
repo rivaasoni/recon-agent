@@ -85,7 +85,7 @@ Phases are strictly sequential. Current status is tracked in the checkboxes belo
 **update them as phases complete.**
 
 - [x] **Phase 1 — Project setup.** Folder structure, venv, requirements, `.gitignore`, README skeleton, git init, first GitHub push.
-- [ ] **Phase 2 — Synthetic data generator.** One month of bank statement + general ledger, with seeded exceptions of known types. Also writes an **answer key** listing each seeded exception and its correct classification.
+- [x] **Phase 2 — Synthetic data generator.** One month of bank statement + general ledger, with seeded exceptions of known types. Also writes an **answer key** listing each seeded exception and its correct classification. Built: `python -m recon.data_gen.generate` → `data/raw/*.csv`, `data/raw/documents/DOC-*.txt` (supporting evidence + noise, never labels), `data/eval/answer_key.csv` (16 exceptions, self-balancing check).
 - [ ] **Phase 3 — Data pipeline.** Load raw files into DuckDB; dbt staging + cleaned models; dbt tests (not_null, unique, accepted_values).
 - [ ] **Phase 4 — Rule-based matching.** Match on amount, date window, and reference. Outputs a matched table and an exceptions table.
 - [ ] **Phase 5 — Agent tools as an MCP server.** Tools: (a) query ledger/bank tables, (b) search supporting documents, (c) propose a correcting journal entry (**proposal only, never executed**).
@@ -113,7 +113,8 @@ Phases are strictly sequential. Current status is tracked in the checkboxes belo
 ├── app/                # Streamlit app (Phase 7)
 ├── data/
 │   ├── raw/            # Generated CSVs        (git-ignored)
-│   └── processed/      # DuckDB file, outputs  (git-ignored)
+│   ├── processed/      # DuckDB file, outputs  (git-ignored)
+│   └── eval/           # Answer key — agent must NEVER see this (git-ignored)
 ├── docs/               # Architecture diagram, case study assets
 ├── scripts/            # One-off runnable entry points
 ├── tests/              # pytest

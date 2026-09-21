@@ -44,6 +44,11 @@ class Settings:
     project_root: Path = PROJECT_ROOT
     raw_dir: Path = PROJECT_ROOT / "data" / "raw"
     processed_dir: Path = PROJECT_ROOT / "data" / "processed"
+    # Supporting documents (invoices, wire confirmations, ...) the agent can search.
+    documents_dir: Path = PROJECT_ROOT / "data" / "raw" / "documents"
+    # Ground truth for grading the agent (Phase 8). Kept in its own folder so
+    # it is never loaded into the warehouse the agent can query.
+    eval_dir: Path = PROJECT_ROOT / "data" / "eval"
     docs_dir: Path = PROJECT_ROOT / "docs"
 
     # The DuckDB warehouse is a single file. Phase 3 creates it.
@@ -82,7 +87,7 @@ class Settings:
         Safe to call repeatedly — `exist_ok=True` means "do nothing if already
         there" rather than raising an error.
         """
-        for path in (self.raw_dir, self.processed_dir):
+        for path in (self.raw_dir, self.processed_dir, self.eval_dir, self.documents_dir):
             path.mkdir(parents=True, exist_ok=True)
 
 
