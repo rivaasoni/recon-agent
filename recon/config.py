@@ -54,6 +54,10 @@ class Settings:
     # The DuckDB warehouse is a single file. Phase 3 creates it.
     duckdb_path: Path = PROJECT_ROOT / "data" / "processed" / "recon.duckdb"
 
+    # Journal entries the agent PROPOSES (Phase 5). One JSON object per line.
+    # Deliberately a separate file: the agent can never write to the warehouse.
+    proposals_path: Path = PROJECT_ROOT / "data" / "processed" / "proposals.jsonl"
+
     # --- Model settings ----------------------------------------------------
     # Read from .env so you can switch models without editing code.
     model: str = field(default_factory=lambda: os.getenv("RECON_MODEL", "claude-opus-5"))

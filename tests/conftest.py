@@ -10,6 +10,7 @@ import pytest
 
 from recon.config import settings
 from recon.data_gen import documents, generate
+from recon.mcp_server import server
 from recon.pipeline import load_raw
 
 
@@ -29,9 +30,10 @@ def temp_settings(tmp_path, monkeypatch):
         eval_dir=tmp_path / "eval",
         documents_dir=tmp_path / "raw" / "documents",
         duckdb_path=tmp_path / "processed" / "recon.duckdb",
+        proposals_path=tmp_path / "processed" / "proposals.jsonl",
     )
     # Each module did `from recon.config import settings`, which gives it its
     # OWN name for the object — so we have to patch that name in each module.
-    for module in (generate, documents, load_raw):
+    for module in (generate, documents, load_raw, server):
         monkeypatch.setattr(module, "settings", temp)
     return temp
