@@ -50,7 +50,7 @@ pip install -r requirements.txt
 cp .env.example .env               # then paste your Anthropic API key into .env
 
 # 5. Verify the setup
-pytest -q
+pytest
 ```
 
 ---
@@ -81,6 +81,7 @@ data/processed/ DuckDB warehouse and outputs    (git-ignored)
 docs/           Architecture diagram, case study assets
 scripts/        Runnable entry points
 tests/          pytest suite
+pyproject.toml  pytest configuration
 ```
 
 ---

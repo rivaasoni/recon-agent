@@ -1,0 +1,25 @@
+# ---------------------------------------------------------------------------
+# Project-level tool configuration.
+#
+# Right now this file exists for one reason: to tell pytest where our code is.
+#
+# The problem it solves: `python -m pytest` adds the current directory to
+# Python's import search path, but a bare `pytest` does not. That makes
+# `import recon` work with one command and fail with the other — a confusing
+# difference that has nothing to do with your code being correct.
+#
+# Setting pythonpath = ["."] adds the project root to the search path no
+# matter how pytest is launched, so both commands behave identically.
+# ---------------------------------------------------------------------------
+
+[tool.pytest.ini_options]
+# Add the project root to sys.path so `import recon` always resolves.
+pythonpath = ["."]
+
+# Where the tests live.
+testpaths = ["tests"]
+
+# -q     = quiet output
+# --strict-markers = typo in a @pytest.mark name becomes an error, not a
+#                    silently ignored decorator
+addopts = "-q --strict-markers"

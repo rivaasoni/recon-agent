@@ -116,13 +116,20 @@ Phases are strictly sequential. Current status is tracked in the checkboxes belo
 │   └── processed/      # DuckDB file, outputs  (git-ignored)
 ├── docs/               # Architecture diagram, case study assets
 ├── scripts/            # One-off runnable entry points
-└── tests/              # pytest
+├── tests/              # pytest
+└── pyproject.toml      # pytest config (pythonpath) — see note below
 ```
 
 ## 7. Common commands
 
 ```bash
 source .venv/bin/activate     # ALWAYS first
-pytest -q                     # run tests
+pytest                        # run tests
 python -c "from recon.config import settings; print(settings)"
 ```
+
+**Note on imports:** `pyproject.toml` sets `pythonpath = ["."]` under
+`[tool.pytest.ini_options]`. Without it, a bare `pytest` fails with
+`ModuleNotFoundError: No module named 'recon'` while `python -m pytest`
+succeeds — because only the `-m` form adds the current directory to
+`sys.path`. Do not remove that setting.
