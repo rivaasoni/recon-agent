@@ -1,0 +1,62 @@
+# ---------------------------------------------------------------------------
+# Matching tests.
+#
+# The most important guarantee here is ONE-TO-ONE: a bank row may appear in
+# at most one match, and so may a ledger row. `unique` on both ID columns
+# enforces exactly that. If it ever fails, a matcher bug is hiding exceptions.
+#
+# `relationships` is a new generic test: every ID here must exist in the
+# table it came from — no made-up or mistyped IDs.
+# ---------------------------------------------------------------------------
+
+version: 2
+
+models:
+  - name: match_rule1_exact
+    description: >
+      Rule 1 matches: same reference, same amount, dates within the window.
+      One-to-one; earliest ledger posting wins (FIFO).
+    columns:
+      - name: bank_txn_id
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('bank_transactions')
+                field: bank_txn_id
+      - name: gl_entry_id
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('gl_entries')
+                field: gl_entry_id
+      - name: match_rule
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [R1_exact]
+
+  - name: exceptions
+    description: >
+      Everything Rule 1 could not match, grouped into cases for the agent.
+      Facts only (shape, amounts, difference) — never a classification.
+    columns:
+      - name: case_id
+        data_tests: [unique, not_null]
+      - name: case_shape
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [both_sides, bank_only, ledger_only]
+      # A row may belong to at most one case. (`unique` ignores NULLs, so
+      # one-sided cases with an empty side are fine.)
+      - name: bank_txn_id
+        data_tests: [unique]
+      - name: gl_entry_id
+        data_tests: [unique]
+      - name: reference_matched_elsewhere
+        description: True/false only. NULL here would be SQL's "unknown" leaking out.
+        data_tests: [not_null]

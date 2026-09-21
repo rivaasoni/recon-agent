@@ -87,7 +87,7 @@ Phases are strictly sequential. Current status is tracked in the checkboxes belo
 - [x] **Phase 1 — Project setup.** Folder structure, venv, requirements, `.gitignore`, README skeleton, git init, first GitHub push.
 - [x] **Phase 2 — Synthetic data generator.** One month of bank statement + general ledger, with seeded exceptions of known types. Also writes an **answer key** listing each seeded exception and its correct classification. Built: `python -m recon.data_gen.generate` → `data/raw/*.csv`, `data/raw/documents/DOC-*.txt` (supporting evidence + noise, never labels), `data/eval/answer_key.csv` (16 exceptions, self-balancing check).
 - [x] **Phase 3 — Data pipeline.** Load raw files into DuckDB; dbt staging + cleaned models; dbt tests (not_null, unique, accepted_values). Built: `raw` schema (all VARCHAR + lineage cols, loaded by `recon/pipeline/load_raw.py`) → `staging` views → `cleaned` tables (`bank_transactions`, `gl_entries`, `documents`). `unique` on `gl_entries.reference` is severity **warn** on purpose — it flags the seeded duplicates (business exceptions, not pipeline errors). Later phases read ONLY from `cleaned`.
-- [ ] **Phase 4 — Rule-based matching.** Match on amount, date window, and reference. Outputs a matched table and an exceptions table.
+- [x] **Phase 4 — Rule-based matching.** Match on amount, date window, and reference. Outputs a matched table and an exceptions table. Built as dbt models in the `matching` schema: `match_rule1_exact` (ref + amount + ±`match_date_window_days`, one-to-one, FIFO so the later duplicate posting is left over) and `exceptions` (one row per CASE: `both_sides` / `bank_only` / `ledger_only`, facts only — never a classification). A looser fallback rule was deliberately NOT built: every leftover is a real exception, so it could only create false matches. `python -m recon.matching.evaluate` scores it vs `data/eval/true_matches.csv` + answer key (currently 100% / 100%, 16/16 caught — expected on clean synthetic data).
 - [ ] **Phase 5 — Agent tools as an MCP server.** Tools: (a) query ledger/bank tables, (b) search supporting documents, (c) propose a correcting journal entry (**proposal only, never executed**).
 - [ ] **Phase 6 — Agent loop.** Agent works each exception, calls tools, classifies, explains reasoning, drafts a fix. Every step logged as a trace.
 - [ ] **Phase 7 — Human-in-the-loop UI.** Streamlit: exception + reasoning trace + Approve / Reject.
@@ -128,6 +128,7 @@ source .venv/bin/activate     # ALWAYS first
 pytest                        # run tests
 python -m recon.pipeline.run  # generate data -> load DuckDB -> dbt build (all of Phases 2–3)
 cd dbt_recon && dbt build     # dbt only — must run from inside dbt_recon/ (profiles.yml lives there)
+python -m recon.matching.evaluate   # score the matcher against ground truth (run after the pipeline)
 python -c "from recon.config import settings; print(settings)"
 ```
 

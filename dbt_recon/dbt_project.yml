@@ -35,3 +35,14 @@ models:
     cleaned:
       +schema: cleaned        # builds into the `cleaned` schema
       +materialized: table    # a stored snapshot: fast for repeated queries
+    matching:
+      +schema: matching       # Phase 4: rule-based matching results
+      +materialized: table
+
+# Project-wide settings that models read with var('name').
+# Kept here, not buried in SQL, so a reviewer can see and change the rules.
+vars:
+  # Max calendar days between ledger posting and bank clearing for a match.
+  # Normal lag is 0-2 business days = up to 4 calendar days over a weekend,
+  # plus 1 day of slack.
+  match_date_window_days: 5

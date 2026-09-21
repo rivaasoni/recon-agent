@@ -8,6 +8,7 @@ Three files describing ONE fictional month of cash activity:
     data/raw/bank_statement.csv   what the BANK says happened
     data/raw/general_ledger.csv   what OUR ACCOUNTANTS recorded
     data/eval/answer_key.csv      the truth about every seeded exception (hidden from the agent)
+    data/eval/true_matches.csv    which bank row truly pairs with which ledger row (Phase 4 grading)
 
 plus supporting documents in data/raw/documents/ (see documents.py).
 
@@ -561,6 +562,19 @@ def check_answer_key(bank: pd.DataFrame, ledger: pd.DataFrame, key: pd.DataFrame
     print(f"Reconciliation proof: gap of {actual_gap:,.2f} fully explained by the answer key.")
 
 
+def build_true_matches(bank: pd.DataFrame, ledger: pd.DataFrame) -> pd.DataFrame:
+    """Which bank row truly pairs with which ledger row (ground truth for Phase 4).
+
+    A true match is a bank row and a ledger row from the same event where
+    NEITHER is part of an exception. Exception rows (e.g. an FX pair whose
+    amounts differ) must NOT be matched by the rules — they belong to the agent.
+    """
+    clean_bank = bank[bank["exception_id"].isna()][["event_id", "bank_txn_id"]]
+    clean_ledger = ledger[ledger["exception_id"].isna()][["event_id", "gl_entry_id"]]
+    pairs = clean_bank.merge(clean_ledger, on="event_id")  # inner join on event_id
+    return pairs[["bank_txn_id", "gl_entry_id"]].sort_values("bank_txn_id").reset_index(drop=True)
+
+
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
@@ -614,6 +628,12 @@ def main() -> None:
     key_path = settings.eval_dir / "answer_key.csv"
     key.to_csv(key_path, index=False)
     print(f"Wrote {len(key):>4} rows -> {key_path.relative_to(settings.project_root)}")
+
+    # Ground truth for grading the Phase 4 matcher. Also in data/eval/.
+    true_matches = build_true_matches(bank, ledger)
+    true_matches_path = settings.eval_dir / "true_matches.csv"
+    true_matches.to_csv(true_matches_path, index=False)
+    print(f"Wrote {len(true_matches):>4} rows -> {true_matches_path.relative_to(settings.project_root)}")
 
     documents = build_documents(month, bank, ledger, settings.random_seed)
     write_documents(documents)

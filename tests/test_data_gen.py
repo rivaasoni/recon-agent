@@ -118,6 +118,22 @@ def test_timing_differences_need_no_entry(dataset):
     assert (timing["cash_adjustment"] == 0).all()
 
 
+def test_true_matches_are_one_to_one_and_exclude_exceptions(dataset):
+    """Ground truth for Phase 4: each row pairs at most once, and no row that
+    belongs to an exception is ever listed as a 'should match' pair."""
+    true_matches = generate.build_true_matches(dataset["bank"], dataset["ledger"])
+    assert true_matches["bank_txn_id"].is_unique
+    assert true_matches["gl_entry_id"].is_unique
+
+    key = dataset["key"]
+    exception_ids = set()
+    for column in ("bank_txn_ids", "gl_entry_ids"):
+        for ids in key[column]:
+            exception_ids |= {i.strip() for i in ids.split(",") if i.strip()}
+    listed = set(true_matches["bank_txn_id"]) | set(true_matches["gl_entry_id"])
+    assert not listed & exception_ids
+
+
 # ---------------------------------------------------------------------------
 # Transposition errors
 # ---------------------------------------------------------------------------
