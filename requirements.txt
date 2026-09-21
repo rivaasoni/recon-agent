@@ -1,0 +1,33 @@
+# ---------------------------------------------------------------------------
+# Dependencies for the Agentic Reconciliation Exceptions Assistant.
+#
+# Version style: ">=X,<Y" means "at least X, but stop before the next major
+# version." Major versions are where breaking changes live, so this gets us
+# bug fixes automatically without waking up to a broken project one day.
+#
+# Install with:  pip install -r requirements.txt
+# ---------------------------------------------------------------------------
+
+# --- Warehouse & dataframes ------------------------------------------------
+duckdb>=1.5,<2              # Local analytical database. One file, no server.
+pandas>=2.2,<3              # Dataframes, used by the data generator and evals.
+
+# --- Transformations & data quality ---------------------------------------
+# dbt-duckdb is the "adapter" that teaches dbt how to talk to DuckDB.
+# It pulls in dbt-core itself, so we deliberately do NOT pin dbt-core here —
+# letting the adapter choose its matching core version avoids conflicts.
+dbt-duckdb>=1.11,<2
+
+# --- Agent & LLM -----------------------------------------------------------
+anthropic>=1.7,<2           # Official Anthropic SDK. Provides the Tool Runner.
+mcp>=2.2,<3                 # Model Context Protocol — our custom tool server.
+python-dotenv>=1.0,<2       # Reads .env into environment variables.
+
+# --- Synthetic data --------------------------------------------------------
+Faker>=30                   # Fake vendor names, references, etc. NEVER real data.
+
+# --- UI --------------------------------------------------------------------
+streamlit>=1.64,<2          # Human-in-the-loop approve/reject interface.
+
+# --- Tests -----------------------------------------------------------------
+pytest>=8,<9
