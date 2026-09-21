@@ -1,0 +1,76 @@
+# ---------------------------------------------------------------------------
+# Cleaned-layer tests: the CONTRACT that Phase 4 (matching) and Phase 6
+# (the agent) rely on.
+#
+# accepted_values is the most useful test here: it says "this column may
+# only ever contain these values". If a new kind of bank line or document
+# appears, the CASE statements map it to 'unknown' and this test fails —
+# instead of the agent quietly reasoning over something it's never seen.
+# ---------------------------------------------------------------------------
+
+version: 2
+
+models:
+  - name: bank_transactions
+    description: Business-ready bank statement lines.
+    columns:
+      - name: bank_txn_id
+        data_tests: [unique, not_null]
+      - name: direction
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [inflow, outflow]
+      - name: channel
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [ach, intl_wire, payroll, bank_charge]
+
+  - name: gl_entries
+    description: Business-ready cash-account ledger entries.
+    columns:
+      - name: gl_entry_id
+        data_tests: [unique, not_null]
+      - name: account
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["1000 Cash - Operating"]
+      - name: direction
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [inflow, outflow]
+      - name: currency
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [USD, EUR, GBP]
+      - name: reference
+        description: >
+          Invoice or bill number. SHOULD be unique, but a duplicate posting
+          is exactly the kind of exception this project exists to find — so
+          this test WARNS instead of failing. Data tests guard the pipeline;
+          business exceptions are the agent's job.
+        data_tests:
+          - unique:
+              config:
+                severity: warn
+
+  - name: documents
+    description: Supporting documents the agent can search.
+    columns:
+      - name: doc_id
+        data_tests: [unique, not_null]
+      - name: doc_type
+        data_tests:
+          - accepted_values:
+              arguments:
+                values:
+                  - vendor_bill
+                  - customer_invoice
+                  - remittance_advice
+                  - ap_payment_run
+                  - wire_confirmation
+                  - fee_schedule

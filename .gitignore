@@ -46,6 +46,10 @@ htmlcov/
 dbt_recon/target/
 dbt_recon/dbt_packages/
 dbt_recon/logs/
+# Anonymous per-machine ID dbt creates on first run. (Note: .gitignore only
+# allows comments on their own line — a trailing "# ..." would become part of
+# the pattern and silently match nothing.)
+dbt_recon/.user.yml
 logs/
 
 # ---------------------------------------------------------------------------

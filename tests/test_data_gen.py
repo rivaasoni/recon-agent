@@ -5,14 +5,12 @@ Most of these check PROPERTIES that must always hold ("every ID is unique",
 Property tests survive harmless changes and still catch real bugs.
 """
 
-import dataclasses
 import random
 
 import pandas as pd
 import pytest
 
 from recon.config import settings
-from recon.data_gen import documents as documents_module
 from recon.data_gen import generate
 from recon.data_gen.generate import (
     PRIVATE_COLUMNS,
@@ -167,30 +165,9 @@ def test_normal_transactions_have_documents_too(dataset):
 
 
 # ---------------------------------------------------------------------------
-# End to end: run main() and inspect the files it writes
+# End to end: run main() and inspect the files it writes.
+# The temp_settings fixture lives in tests/conftest.py (shared with other files).
 # ---------------------------------------------------------------------------
-@pytest.fixture
-def temp_settings(tmp_path, monkeypatch):
-    """Point every output path at a throwaway folder.
-
-    tmp_path is a fresh empty folder pytest creates for this test. monkeypatch
-    swaps our settings for a copy that writes there — so this test never
-    touches your real data/ folder.
-    """
-    temp = dataclasses.replace(
-        settings,
-        project_root=tmp_path,
-        raw_dir=tmp_path / "raw",
-        processed_dir=tmp_path / "processed",
-        eval_dir=tmp_path / "eval",
-        documents_dir=tmp_path / "raw" / "documents",
-    )
-    # Both modules imported `settings` by name, so patch it in each.
-    monkeypatch.setattr(generate, "settings", temp)
-    monkeypatch.setattr(documents_module, "settings", temp)
-    return temp
-
-
 def test_main_writes_all_outputs(temp_settings):
     generate.main()
 

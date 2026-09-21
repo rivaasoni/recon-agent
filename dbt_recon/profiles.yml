@@ -1,0 +1,20 @@
+# ---------------------------------------------------------------------------
+# dbt profile: HOW to connect to the database.
+#
+# Normally this file lives in ~/.dbt/ because it holds passwords. Ours has
+# NO secrets — DuckDB is just a local file — so it is committed with the
+# project. Anyone who clones the repo gets a working setup.
+#
+# dbt looks for profiles.yml in the current folder first, which is why we
+# always run dbt from inside dbt_recon/.
+# ---------------------------------------------------------------------------
+
+recon:                 # profile name — matches `profile:` in dbt_project.yml
+  target: dev          # which of the outputs below to use by default
+  outputs:
+    dev:
+      type: duckdb
+      # Relative to dbt_recon/, so ".." goes up to the project root.
+      # This is the same file recon/config.py calls settings.duckdb_path.
+      path: ../data/processed/recon.duckdb
+      threads: 1       # DuckDB allows one writer at a time; 1 keeps it simple

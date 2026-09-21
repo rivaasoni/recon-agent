@@ -1,0 +1,27 @@
+# ---------------------------------------------------------------------------
+# Sources: tables that exist BEFORE dbt runs.
+#
+# dbt does not build these — our Python loader (recon/pipeline/load_raw.py)
+# does. Declaring them here lets models say {{ source('raw', 'bank_statement') }}
+# instead of hardcoding a table name, so dbt can track lineage:
+#
+#     raw (sources)  ->  staging models  ->  cleaned models
+# ---------------------------------------------------------------------------
+
+version: 2
+
+sources:
+  - name: raw
+    description: >
+      Files from the synthetic data generator, loaded as-is (every column is
+      text) by recon/pipeline/load_raw.py. Never edited in place.
+    schema: raw
+    tables:
+      - name: bank_statement
+        description: One row per transaction on the August 2026 bank statement.
+      - name: general_ledger
+        description: One row per entry in ledger account 1000 Cash - Operating.
+      - name: documents
+        description: >
+          Supporting documents (invoices, bills, wire confirmations, fee
+          schedule, remittances). One row per text file.

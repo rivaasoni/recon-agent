@@ -1,0 +1,45 @@
+# ---------------------------------------------------------------------------
+# Staging tests: the basic shape of each source.
+#
+# We test IDs and key fields as EARLY as possible. If a raw file arrives
+# broken, `dbt build` fails here and never builds the cleaned layer on top.
+# ---------------------------------------------------------------------------
+
+version: 2
+
+models:
+  - name: stg_bank_transactions
+    description: Bank statement lines, typed. One row per raw row.
+    columns:
+      - name: bank_txn_id
+        data_tests: [unique, not_null]
+      - name: value_date
+        data_tests: [not_null]
+      - name: description
+        data_tests: [not_null]
+      - name: amount
+        data_tests: [not_null]
+
+  - name: stg_gl_entries
+    description: Cash-account ledger entries, typed. One row per raw row.
+    columns:
+      - name: gl_entry_id
+        data_tests: [unique, not_null]
+      - name: posting_date
+        data_tests: [not_null]
+      - name: account
+        data_tests: [not_null]
+      - name: amount
+        data_tests: [not_null]
+      - name: currency
+        data_tests: [not_null]
+
+  - name: stg_documents
+    description: Supporting documents. One row per text file.
+    columns:
+      - name: doc_id
+        data_tests: [unique, not_null]
+      - name: doc_type
+        data_tests: [not_null]
+      - name: content
+        data_tests: [not_null]

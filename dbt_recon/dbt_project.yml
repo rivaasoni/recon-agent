@@ -1,0 +1,37 @@
+# ---------------------------------------------------------------------------
+# dbt project configuration.
+#
+# This file tells dbt: what the project is called, which profile (database
+# connection) to use, and where to find models, tests and macros.
+#
+# Always run dbt commands from INSIDE this folder:
+#     cd dbt_recon
+#     dbt debug
+# ---------------------------------------------------------------------------
+
+name: recon
+version: "1.0.0"
+
+# Must match the top-level key in profiles.yml.
+profile: recon
+
+# Where dbt looks for each kind of file.
+model-paths: ["models"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+
+# Folders `dbt clean` is allowed to delete. Both are generated, never edited.
+clean-targets:
+  - target
+  - dbt_packages
+
+# Settings applied by FOLDER. `recon` is the project name from the top.
+# The `+` means "apply this to every model in this folder and below".
+models:
+  recon:
+    staging:
+      +schema: staging        # builds into the `staging` schema
+      +materialized: view     # a saved query: cheap, always up to date
+    cleaned:
+      +schema: cleaned        # builds into the `cleaned` schema
+      +materialized: table    # a stored snapshot: fast for repeated queries
