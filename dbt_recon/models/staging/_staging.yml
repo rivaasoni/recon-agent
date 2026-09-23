@@ -34,6 +34,54 @@ models:
       - name: currency
         data_tests: [not_null]
 
+  - name: stg_agent_proposals
+    description: One proposal per row. A case may appear more than once (re-runs).
+    columns:
+      - name: proposal_id
+        data_tests: [unique, not_null]
+      - name: case_id
+        data_tests: [not_null]
+      - name: created_at
+        data_tests: [not_null]
+      - name: classification
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [timing_difference, duplicate, bank_fee, fx_difference,
+                         missing_ledger_entry, amount_mismatch]
+
+  - name: stg_agent_decisions
+    description: One human decision per row; append-only, so re-decisions are kept.
+    columns:
+      - name: decision_id
+        data_tests: [unique, not_null]
+      - name: proposal_id
+        data_tests: [not_null]
+      - name: reviewer
+        description: An audit log must say who decided.
+        data_tests: [not_null]
+      - name: decision
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [approved, rejected]
+
+  - name: stg_agent_case_runs
+    description: One row per case per run.
+    columns:
+      - name: case_run_id
+        description: Surrogate key (run_id + case_id) — enforces the grain.
+        data_tests: [unique, not_null]
+      - name: run_id
+        data_tests: [not_null]
+      - name: case_id
+        data_tests: [not_null]
+      - name: status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [completed, no_proposal, hit_iteration_cap, refused, error]
+
   - name: stg_documents
     description: Supporting documents. One row per text file.
     columns:

@@ -38,6 +38,9 @@ models:
     matching:
       +schema: matching       # Phase 4: rule-based matching results
       +materialized: table
+    analytics:
+      +schema: analytics      # Phase 9: metrics for BI (Power BI)
+      +materialized: table
 
 # Project-wide settings that models read with var('name').
 # Kept here, not buried in SQL, so a reviewer can see and change the rules.

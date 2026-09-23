@@ -25,3 +25,11 @@ sources:
         description: >
           Supporting documents (invoices, bills, wire confirmations, fee
           schedule, remittances). One row per text file.
+
+      # --- Agent outputs (Phase 9), loaded by recon/pipeline/load_agent_outputs.py
+      - name: agent_proposals
+        description: One row per proposal the agent made (never overwritten).
+      - name: agent_decisions
+        description: One row per human approve/reject decision (append-only).
+      - name: agent_case_runs
+        description: One row per case per agent run — status, steps, cost, latency.

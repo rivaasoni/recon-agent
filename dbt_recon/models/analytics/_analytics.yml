@@ -1,0 +1,49 @@
+# ---------------------------------------------------------------------------
+# Analytics layer: the tables a BI tool (Power BI) reads.
+#
+# The fact table is where the definitions live. If a number in a dashboard
+# looks wrong, this is the first place to check what it actually means.
+# ---------------------------------------------------------------------------
+
+version: 2
+
+models:
+  - name: fct_exception_cases
+    description: >
+      One row per exception case, with its current state: the case facts, the
+      agent's latest proposal, the current human decision and the latest run's
+      stats. Every metrics table is a GROUP BY over this one.
+    columns:
+      - name: case_id
+        description: One row per case — the grain of this table.
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('exceptions')
+                field: case_id
+      - name: break_value
+        description: >
+          Money at stake. Two-sided cases: the bank-minus-ledger difference.
+          One-sided cases: the amount of the row that exists. Always positive.
+        data_tests: [not_null]
+      - name: review_status
+        description: no_proposal -> pending -> approved / rejected.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [no_proposal, pending, approved, rejected]
+      - name: classification
+        description: The agent's exception type (NULL if it never proposed).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [timing_difference, duplicate, bank_fee, fx_difference,
+                         missing_ledger_entry, amount_mismatch]
+      - name: run_status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [completed, no_proposal, hit_iteration_cap, refused, error]
