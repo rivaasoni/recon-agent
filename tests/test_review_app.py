@@ -134,3 +134,13 @@ def test_export_button_activates_once_something_is_approved(one_pending_case):
     download = app.download_button[0]
     assert not download.disabled
     assert "2 approved journal lines" in download.label     # the entry's two lines
+
+
+def test_empty_queue_tells_a_newcomer_to_run_the_agent(tiny_warehouse):
+    """A fresh clone has cases but no proposals. 'No cases' would be true but
+    useless; the app should say what to do."""
+    app = start_app()
+
+    messages = " ".join(info.value for info in app.sidebar.info)
+    assert "agent hasn't run yet" in messages
+    assert "python -m recon.agent.run_all" in messages

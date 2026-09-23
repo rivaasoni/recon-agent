@@ -80,7 +80,15 @@ def sidebar(items: list[dict]) -> dict | None:
         and (item["proposal"] is None or item["proposal"]["classification"] in chosen_types)
     ]
     if not visible:
-        st.sidebar.info("No cases with the selected statuses.")
+        # On a fresh clone nothing has been proposed yet, so "no cases" is
+        # true but unhelpful — say what to do about it.
+        if not any(item["proposal"] for item in items):
+            st.sidebar.info(
+                f"{len(items)} cases are waiting, but the agent hasn't run yet.\n\n"
+                "Run it first:\n\n`python -m recon.agent.run_all`"
+            )
+        else:
+            st.sidebar.info("No cases with the selected statuses.")
         return None
 
     def label(item: dict) -> str:
