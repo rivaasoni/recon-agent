@@ -12,6 +12,7 @@ import pytest
 from recon.config import settings
 from recon.agent import loop, run_all
 from recon.data_gen import documents, generate
+from recon.evals import grade, report
 from recon.mcp_server import server
 from recon.pipeline import load_raw
 from recon.review import store
@@ -39,7 +40,7 @@ def temp_settings(tmp_path, monkeypatch):
     )
     # Each module did `from recon.config import settings`, which gives it its
     # OWN name for the object — so we have to patch that name in each module.
-    for module in (generate, documents, load_raw, server, loop, run_all, store):
+    for module in (generate, documents, load_raw, server, loop, run_all, store, grade, report):
         monkeypatch.setattr(module, "settings", temp)
     return temp
 

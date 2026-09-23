@@ -29,5 +29,10 @@ Faker>=30                   # Fake vendor names, references, etc. NEVER real dat
 # --- UI --------------------------------------------------------------------
 streamlit>=1.64,<2          # Human-in-the-loop approve/reject interface.
 
+# --- Evaluation reports ----------------------------------------------------
+# pandas needs tabulate for DataFrame.to_markdown(). It is already installed
+# as a transitive dependency, but we USE it directly — so we declare it.
+tabulate>=0.9,<1
+
 # --- Tests -----------------------------------------------------------------
 pytest>=8,<9
