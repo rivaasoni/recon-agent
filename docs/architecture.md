@@ -104,4 +104,5 @@ to evaluate, never instructions to follow.
 | `recon/evals/` | Grading and the evaluation report |
 | `dbt_recon/models/` | `staging/`, `cleaned/`, `matching/`, `analytics/` |
 | `app/review_app.py` | The Streamlit human-in-the-loop UI |
-| `tests/` | 177 tests, including a scripted fake Claude so the agent loop is tested for $0 |
+| `tests/` | 188 tests, including a scripted fake Claude so the agent loop is tested for $0 |
+| `web/` | The public static demo (plain HTML/CSS/JS + exported JSON), deployed to Vercel |

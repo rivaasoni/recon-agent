@@ -66,7 +66,8 @@ differences, missing ledger entries, amount mismatches.
 | Agent | **Anthropic SDK Tool Runner** | `client.beta.messages.tool_runner`. Chosen over LangChain/CrewAI so the agent loop stays visible and explainable in interviews. |
 | Model | `claude-opus-5` | Default. Use adaptive thinking. Cheaper swap: `claude-sonnet-5`. |
 | Tools | **Custom MCP server** (`mcp` package) | Exposes the agent's tools over a standard protocol. |
-| UI | **Streamlit** | Human-in-the-loop approve/reject. |
+| Review UI | **Streamlit** | Human-in-the-loop approve/reject. Writes decisions, so it runs locally — NOT deployable to Vercel (Streamlit needs a long-lived server). |
+| Public demo | **Static HTML/CSS/JS in `web/`, hosted on Vercel** | Read-only view of pre-computed results. No backend, no API key, no model calls. Data exported by `python -m recon.pipeline.build_web_demo`. |
 | Tests | **pytest** | |
 | BI | Power BI | Connects to the analytics layer in Phase 9. |
 
@@ -97,7 +98,7 @@ Phases are strictly sequential. Current status is tracked in the checkboxes belo
 
 - [x] **Bonus — Public demo.** Static read-only site in `web/` (plain HTML/CSS/JS, no build step), data exported by `python -m recon.pipeline.build_web_demo` into `web/data/` (**committed on purpose** — Vercel serves the repo). Deployed at **https://recon-agent-zeta.vercel.app** via GitHub import with Root Directory = `web`; every push redeploys. Never calls the API. Gotcha fixed: `.gitignore` patterns **without a slash match at any depth**, so `traces/` silently ignored `web/data/traces/` and 404'd the live site — now `/traces/`, with a test.
 
-**ALL 10 PHASES COMPLETE.** 178 tests, 83 dbt models+tests, 13 commits. Remaining optional work is listed in the README's "Next steps": harder eval cases, routing by value, a cheaper-model comparison, learning from rejection notes, multi-month data.
+**ALL 10 PHASES COMPLETE.** 188 tests, 83 dbt models+tests, live demo at https://recon-agent-zeta.vercel.app. Remaining optional work is listed in the README's "Next steps": harder eval cases, routing by value, a cheaper-model comparison, learning from rejection notes, multi-month data.
 
 ---
 

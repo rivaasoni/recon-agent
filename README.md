@@ -218,7 +218,7 @@ python3.13 -m venv .venv && source .venv/bin/activate     # Windows: .venv\Scrip
 pip install -r requirements.txt
 cp .env.example .env            # paste your Anthropic API key (only needed for the agent)
 
-pytest                          # 177 tests, no API key needed
+pytest                          # 188 tests, no API key needed
 
 python -m recon.pipeline.run    # generate data -> load DuckDB -> dbt build (models + tests)
 python -m recon.matching.evaluate   # score the matcher against ground truth
@@ -246,8 +246,9 @@ python -m recon.pipeline.refresh_analytics    # rebuild metrics + export for Pow
 | Transformations | **dbt-duckdb** | Version-controlled, tested SQL with lineage |
 | Agent | **Anthropic SDK Tool Runner** (`claude-opus-5`) | The agent loop stays visible and explainable, unlike a heavier framework |
 | Tools | **Custom MCP server** | Tools written once work with any MCP client, and the server is the security boundary |
-| UI | **Streamlit** | A review app in one Python file |
-| Tests | **pytest** | 177 tests, including a scripted fake Claude that exercises the whole agent loop for $0 |
+| Review UI | **Streamlit** | The approve/reject app, in one Python file. It writes decisions, so it runs where the data is — not on a public URL |
+| Public demo | **Static HTML/CSS/JS on Vercel** | A read-only view of results already produced. No build step, no backend, and no way to call a model — so the public site can't cost anything or touch the API key |
+| Tests | **pytest** | 188 tests, including a scripted fake Claude that exercises the whole agent loop for $0 |
 | BI | **Power BI** | Reads the exported Parquet/CSV marts |
 
 ---
