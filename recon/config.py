@@ -61,6 +61,9 @@ class Settings:
     # Agent traces (Phase 6): one folder per run, one JSON file per case.
     traces_dir: Path = PROJECT_ROOT / "data" / "processed" / "traces"
 
+    # Human approve/reject decisions (Phase 7). Append-only audit log.
+    decisions_path: Path = PROJECT_ROOT / "data" / "processed" / "decisions.jsonl"
+
     # --- Model settings ----------------------------------------------------
     # Read from .env so you can switch models without editing code.
     model: str = field(default_factory=lambda: os.getenv("RECON_MODEL", "claude-opus-5"))

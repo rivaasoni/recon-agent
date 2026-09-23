@@ -14,6 +14,7 @@ from recon.agent import loop, run_all
 from recon.data_gen import documents, generate
 from recon.mcp_server import server
 from recon.pipeline import load_raw
+from recon.review import store
 
 
 @pytest.fixture
@@ -34,10 +35,11 @@ def temp_settings(tmp_path, monkeypatch):
         duckdb_path=tmp_path / "processed" / "recon.duckdb",
         proposals_path=tmp_path / "processed" / "proposals.jsonl",
         traces_dir=tmp_path / "processed" / "traces",
+        decisions_path=tmp_path / "processed" / "decisions.jsonl",
     )
     # Each module did `from recon.config import settings`, which gives it its
     # OWN name for the object — so we have to patch that name in each module.
-    for module in (generate, documents, load_raw, server, loop, run_all):
+    for module in (generate, documents, load_raw, server, loop, run_all, store):
         monkeypatch.setattr(module, "settings", temp)
     return temp
 
@@ -63,7 +65,9 @@ def tiny_warehouse(temp_settings):
         con.execute(
             """
             create table cleaned.bank_transactions as
-            select * from (values
+            select *, abs(amount) as abs_amount,
+                   'bank_statement.csv' as _source_file, current_timestamp as _loaded_at
+            from (values
                 ('BNK-0036', date '2026-08-07', 'ACH DEBIT GRAY-MAYO', 'BILL-5051',
                  -11541.85::decimal(12,2), 'outflow', 'ach'),
                 ('BNK-0055', date '2026-08-12', 'INTL WIRE OUT GRAY-MAYO GBP 9,400.31 @1.3022', 'BILL-5059',
@@ -76,7 +80,10 @@ def tiny_warehouse(temp_settings):
         con.execute(
             """
             create table cleaned.gl_entries as
-            select * from (values
+            select *, '1000 Cash - Operating' as account, abs(amount) as abs_amount,
+                   currency <> 'USD' as is_foreign_currency,
+                   'general_ledger.csv' as _source_file, current_timestamp as _loaded_at
+            from (values
                 ('GL-0042', date '2026-08-07', 'Gray-Mayo', 'Vendor payment - BILL-5051', 'BILL-5051',
                  -11541.85::decimal(12,2), 'outflow', 'USD', null::decimal(12,2), null::decimal(10,4)),
                 ('GL-0047', date '2026-08-10', 'Gray-Mayo', 'Vendor payment - BILL-5051', 'BILL-5051',
@@ -98,27 +105,36 @@ def tiny_warehouse(temp_settings):
             create table matching.exceptions as
             select * from (values
                 ('CASE-001', 'both_sides', 'BILL-5059', date '2026-08-12',
-                 'BNK-0055', -12241.08::decimal(12,2),
-                 'GL-0063',  -12032.40::decimal(12,2), 'GBP',
+                 'BNK-0055', date '2026-08-12', 'INTL WIRE OUT GRAY-MAYO GBP 9,400.31 @1.3022',
+                 -12241.08::decimal(12,2),
+                 'GL-0063', date '2026-08-12', 'Gray-Mayo', 'Vendor payment - BILL-5059',
+                 -12032.40::decimal(12,2), 'GBP', 9400.31::decimal(12,2), 1.2800::decimal(10,4),
                  -208.68::decimal(13,2), false),
                 ('CASE-002', 'bank_only', null, date '2026-08-31',
-                 'BNK-0125', -45.00::decimal(12,2),
-                 null, null, null,
+                 'BNK-0125', date '2026-08-31', 'MONTHLY ACCOUNT SERVICE CHARGE',
+                 -45.00::decimal(12,2),
+                 null, null, null, null,
+                 null, null, null, null,
                  null, false),
                 ('CASE-003', 'ledger_only', 'BILL-5051', date '2026-08-10',
-                 null, null,
-                 'GL-0047', -11541.85::decimal(12,2), 'USD',
+                 null, null, null, null,
+                 'GL-0047', date '2026-08-10', 'Gray-Mayo', 'Vendor payment - BILL-5051',
+                 -11541.85::decimal(12,2), 'USD', null, null,
                  null, true)
             ) as t(case_id, case_shape, reference, case_date,
-                   bank_txn_id, bank_amount,
-                   gl_entry_id, ledger_amount, ledger_currency,
+                   bank_txn_id, bank_date, bank_description, bank_amount,
+                   gl_entry_id, ledger_date, ledger_counterparty, ledger_description,
+                   ledger_amount, ledger_currency, ledger_foreign_amount, ledger_fx_rate,
                    amount_difference, reference_matched_elsewhere)
             """
         )
         con.execute(
             """
             create table cleaned.documents as
-            select * from (values
+            select *, doc_type as doc_title,
+                   'documents/' || doc_id || '.txt' as _source_file,
+                   current_timestamp as _loaded_at
+            from (values
                 ('DOC-001', 'fee_schedule', null,
                  'DOCUMENT: Fee Schedule' || chr(10) ||
                  'Monthly account service charge ... USD 45.00'),

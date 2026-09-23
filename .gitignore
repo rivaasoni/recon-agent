@@ -57,5 +57,8 @@ logs/
 # ---------------------------------------------------------------------------
 .DS_Store
 .vscode/
+# Folders created by AI coding tools, not part of the project
+.agents/
+.claude/
 .idea/
 *.swp
