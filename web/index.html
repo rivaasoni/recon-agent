@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reconciliation Exceptions Agent — demo</title>
+<meta name="description" content="An AI agent that investigates bank reconciliation exceptions, proposes correcting journal entries, and waits for human approval. All data is synthetic.">
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>🏦</text></svg>">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <p class="badge">All data is synthetic — no real bank or customer information</p>
+    <h1>Reconciliation Exceptions Agent</h1>
+    <p class="tagline">
+      Rules clear the easy matches between a bank statement and a general ledger.
+      An AI agent investigates what's left, proposes a correcting journal entry,
+      and waits for a human to approve it.
+    </p>
+    <p class="links">
+      <a href="https://github.com/rivaasoni/recon-agent">Source on GitHub</a>
+      <span aria-hidden="true">·</span>
+      <span id="run-meta">loading…</span>
+    </p>
+  </div>
+</header>
+
+<nav class="tabs wrap" role="tablist" aria-label="Sections">
+  <button role="tab" aria-selected="true" data-tab="overview">Overview</button>
+  <button role="tab" aria-selected="false" data-tab="cases">The 16 exceptions</button>
+  <button role="tab" aria-selected="false" data-tab="evaluation">How well it did</button>
+</nav>
+
+<main class="wrap">
+
+  <!-- ---------------------------------------------------------------- -->
+  <section id="overview" class="tab-panel" role="tabpanel">
+    <div id="headline" class="metric-grid"><p class="loading">Loading…</p></div>
+
+    <h2>Where the work goes</h2>
+    <p class="note">
+      Each exception is money that doesn't line up between the bank and the ledger.
+      Not all of it needs fixing: timing differences clear by themselves next month.
+    </p>
+    <div class="table-scroll">
+      <table id="break-types">
+        <thead>
+          <tr>
+            <th scope="col">Exception type</th>
+            <th scope="col" class="num">Cases</th>
+            <th scope="col" class="num">Value</th>
+            <th scope="col" class="num">Share of value</th>
+            <th scope="col" class="num">Needs an entry</th>
+            <th scope="col" class="num">Agent cost</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <h2>How it works</h2>
+    <ol class="steps">
+      <li><strong>Match what's obvious.</strong> Same reference, same amount, dates within a window — strictly one-to-one, so a duplicate posting can't hide inside a match.</li>
+      <li><strong>Investigate the rest.</strong> The agent queries the bank and ledger tables and searches supporting documents (invoices, wire confirmations, the bank's fee schedule) through a read-only tool server.</li>
+      <li><strong>Propose, never post.</strong> It drafts a balanced double-entry and records it as <em>pending</em>. No tool exists that could write to a ledger.</li>
+      <li><strong>A human decides.</strong> A reviewer sees the case, the entry, the evidence and the full reasoning before approving or rejecting.</li>
+      <li><strong>Grade every run.</strong> The data is generated with an answer key the agent never sees, and each run is scored on the classification <em>and</em> the entry's effect on cash.</li>
+    </ol>
+  </section>
+
+  <!-- ---------------------------------------------------------------- -->
+  <section id="cases" class="tab-panel" role="tabpanel" hidden>
+    <p class="note">
+      Every exception the rules couldn't match, with what the agent decided and why.
+      Pick a case to read its full investigation.
+    </p>
+    <div class="case-layout">
+      <ul id="case-list" class="case-list" aria-label="Exception cases"></ul>
+      <article id="case-detail" class="case-detail"><p class="loading">Loading…</p></article>
+    </div>
+  </section>
+
+  <!-- ---------------------------------------------------------------- -->
+  <section id="evaluation" class="tab-panel" role="tabpanel" hidden>
+    <p class="note">
+      The data is generated with an answer key the agent never sees. Every run is
+      scored twice: the exception <strong>type</strong>, and whether the proposed
+      entry moves cash by the <strong>right amount</strong>, to the cent.
+    </p>
+
+    <div id="eval-headline" class="metric-grid"></div>
+
+    <h2>By exception type</h2>
+    <div class="table-scroll">
+      <table id="eval-by-type">
+        <thead>
+          <tr>
+            <th scope="col">Exception type</th>
+            <th scope="col" class="num">Cases</th>
+            <th scope="col" class="num">Correct</th>
+            <th scope="col" class="num">Accuracy</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <h2>Confusion matrix</h2>
+    <p class="note">
+      Rows are the true type, columns what the agent said. Correct answers sit on the
+      diagonal — anything off it is a specific mix-up to investigate.
+    </p>
+    <div class="table-scroll"><table id="eval-confusion"><thead></thead><tbody></tbody></table></div>
+
+    <h2>How the grading works</h2>
+    <ol class="steps">
+      <li>The generator seeds exceptions of known type and writes an <strong>answer key</strong> to a folder that is never loaded into the warehouse the agent can query — a test enforces that.</li>
+      <li>The answer key and the agent's work use <strong>unrelated ID spaces</strong>, so nothing links them by accident. The grader joins them on the bank and ledger row IDs they share.</li>
+      <li>A correct label with the wrong amount counts as a <strong>failure</strong>: "fully correct" needs both.</li>
+      <li>Which expense or payable account to use is a judgement call, so the offset account is reported but never fails a case.</li>
+    </ol>
+
+    <h2>How to read these numbers</h2>
+    <ul class="caveats">
+      <li><strong>Small sample.</strong> 16 cases, 2–3 per type. One mistake moves a type's accuracy by 33–50%, so per-type figures point at what to investigate; they are not reliable rates.</li>
+      <li><strong>One run.</strong> Model output varies between runs; measuring stability needs repeats.</li>
+      <li><strong>Synthetic, tidy data.</strong> Every exception has decisive evidence reachable through the tools. Real statements bring partial payments, batched deposits and missing paperwork — none are represented here.</li>
+      <li><strong>The rules did the easy work first.</strong> Deterministic matching paired 114 of 125 bank lines, so the agent only saw genuine exceptions.</li>
+    </ul>
+
+    <p class="note">
+      Full report, including every case:
+      <a id="report-link" href="https://github.com/rivaasoni/recon-agent/blob/main/docs/evals/">the eval report on GitHub</a>.
+    </p>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <p>
+      Python · DuckDB · dbt · MCP · Claude Opus 5 · Streamlit · pytest.
+      This page is static: it reads pre-computed results and never calls an AI model.
+    </p>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

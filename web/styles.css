@@ -1,0 +1,231 @@
+/* ---------------------------------------------------------------------------
+   Reconciliation demo — styles.
+   Plain CSS, no framework. Colours are defined once as variables at the top,
+   then re-defined for dark mode, so nothing else needs to know about themes.
+   --------------------------------------------------------------------------- */
+
+:root {
+  --bg: #fbfbfa;
+  --surface: #ffffff;
+  --surface-2: #f4f4f2;
+  --border: #e3e3df;
+  --text: #1c1c1a;
+  --text-muted: #63635e;
+  --accent: #1a5c4a;          /* deep green: money, without being a cliché */
+  --accent-soft: #e6f0ec;
+  --good: #1f7a4d;
+  --bad: #b3261e;
+  --warn: #8a6100;
+  --radius: 10px;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17181a;
+    --surface: #1f2123;
+    --surface-2: #26282b;
+    --border: #34373b;
+    --text: #ececea;
+    --text-muted: #a3a49f;
+    --accent: #6bc3a4;
+    --accent-soft: #23342e;
+    --good: #6bc3a4;
+    --bad: #f08a80;
+    --warn: #e0b354;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+
+/* --- Header --------------------------------------------------------------- */
+.site-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 32px 0 26px;
+}
+.site-header h1 { margin: 10px 0 8px; font-size: 1.9rem; letter-spacing: -0.02em; }
+.tagline { margin: 0; max-width: 62ch; color: var(--text-muted); }
+.badge {
+  display: inline-block;
+  margin: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.links { margin: 14px 0 0; font-size: 0.86rem; color: var(--text-muted); }
+.links a { color: var(--accent); }
+
+/* --- Tabs ----------------------------------------------------------------- */
+.tabs { display: flex; gap: 6px; margin: 18px auto 0; flex-wrap: wrap; }
+.tabs button {
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.95rem;
+  padding: 9px 14px;
+  cursor: pointer;
+}
+.tabs button:hover { background: var(--surface-2); color: var(--text); }
+.tabs button[aria-selected="true"] {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text);
+  font-weight: 600;
+}
+.tabs button:focus-visible,
+.case-list button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+main { padding: 26px 20px 60px; }
+h2 { font-size: 1.15rem; margin: 34px 0 8px; }
+.note { color: var(--text-muted); max-width: 70ch; margin: 0 0 14px; }
+.loading { color: var(--text-muted); }
+
+/* --- Metrics -------------------------------------------------------------- */
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+}
+.metric {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+.metric .value { font-size: 1.6rem; font-weight: 650; letter-spacing: -0.02em; }
+.metric .label { color: var(--text-muted); font-size: 0.82rem; margin-top: 2px; }
+.metric .sub { color: var(--text-muted); font-size: 0.78rem; margin-top: 6px; }
+
+/* --- Tables --------------------------------------------------------------- */
+.table-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); }
+th { color: var(--text-muted); font-weight: 600; font-size: 0.82rem; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+tbody tr:last-child td { border-bottom: none; }
+
+/* --- Steps list ----------------------------------------------------------- */
+.steps { max-width: 72ch; padding-left: 20px; }
+.steps li { margin-bottom: 8px; }
+
+/* --- Cases ---------------------------------------------------------------- */
+.case-layout { display: grid; grid-template-columns: 290px 1fr; gap: 18px; align-items: start; }
+.case-list { list-style: none; margin: 0; padding: 0; max-height: 70vh; overflow-y: auto; }
+.case-list button {
+  width: 100%;
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  font: inherit;
+  color: var(--text);
+  cursor: pointer;
+}
+.case-list button:hover { border-color: var(--accent); }
+.case-list button[aria-current="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.case-list .case-id { font-weight: 650; font-size: 0.9rem; }
+.case-list .case-meta { color: var(--text-muted); font-size: 0.8rem; display: flex; justify-content: space-between; gap: 8px; }
+
+.case-detail {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  min-height: 300px;
+}
+.case-detail h3 { margin: 0 0 4px; font-size: 1.25rem; }
+.case-detail h4 { margin: 22px 0 6px; font-size: 0.95rem; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+.fact-card { background: var(--surface-2); border-radius: var(--radius); padding: 12px 14px; font-size: 0.9rem; }
+.fact-card dt { color: var(--text-muted); font-size: 0.78rem; }
+.fact-card dd { margin: 0 0 8px; font-variant-numeric: tabular-nums; }
+.explanation { white-space: pre-wrap; background: var(--surface-2); border-radius: var(--radius); padding: 14px; font-size: 0.92rem; }
+
+.pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 0.78rem; font-weight: 600; }
+.pill-type { background: var(--accent-soft); color: var(--accent); }
+.pill-good { background: var(--accent-soft); color: var(--good); }
+.pill-bad { background: #f7e4e2; color: var(--bad); }
+@media (prefers-color-scheme: dark) { .pill-bad { background: #3a2422; } }
+
+code, .mono { font-family: var(--mono); font-size: 0.86em; }
+
+/* --- Trace ---------------------------------------------------------------- */
+details.step {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 8px;
+  background: var(--surface-2);
+}
+details.step > summary {
+  cursor: pointer;
+  padding: 10px 14px;
+  font-size: 0.9rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+details.step > summary::-webkit-details-marker { display: none; }
+.step-body { padding: 0 14px 14px; font-size: 0.9rem; }
+.step-body .thinking { color: var(--text-muted); font-style: italic; }
+.step-body pre {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  overflow-x: auto;
+  font-size: 0.8rem;
+  max-height: 260px;
+}
+.tool-name { font-family: var(--mono); font-size: 0.85rem; color: var(--accent); }
+
+/* --- Evaluation ----------------------------------------------------------- */
+#eval-confusion th { white-space: nowrap; }
+#eval-confusion tbody th { font-weight: 600; color: var(--text); }
+.cell { color: var(--text-muted); }
+/* The diagonal = the agent said what it actually was. Highlighted so the
+   shape of the result reads at a glance. */
+.cell.diagonal { background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+.cell.mistake { background: #f7e4e2; color: var(--bad); font-weight: 700; }
+@media (prefers-color-scheme: dark) { .cell.mistake { background: #3a2422; } }
+
+.caveats { max-width: 72ch; padding-left: 20px; color: var(--text); }
+.caveats li { margin-bottom: 8px; }
+
+/* A tool that returned an error (the agent usually recovers and retries). */
+.step-body pre.error { border-color: var(--bad); color: var(--bad); }
+
+/* --- Footer --------------------------------------------------------------- */
+.site-footer {
+  border-top: 1px solid var(--border);
+  padding: 20px 0 36px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+/* --- Small screens -------------------------------------------------------- */
+@media (max-width: 760px) {
+  .case-layout { grid-template-columns: 1fr; }
+  .case-list { max-height: none; }
+  .site-header h1 { font-size: 1.5rem; }
+}

@@ -1,0 +1,229 @@
+{
+  "generated_at": "2026-09-23T20:39:45+00:00",
+  "run_id": "run-20260921-215515",
+  "model": "claude-opus-5",
+  "reconciliation": {
+    "period": "2026-08-01T00:00:00",
+    "bank_lines": 125,
+    "ledger_entries": 125,
+    "matched_pairs": 114,
+    "bank_match_rate": 0.912,
+    "value_match_rate": 0.956623320785399,
+    "exception_cases": 16,
+    "break_value": 84583.56,
+    "open_cases": 16,
+    "open_break_value": 84583.56,
+    "approved_cases": 0,
+    "rejected_cases": 0,
+    "cases_without_proposal": 0,
+    "resolution_rate": 0.0
+  },
+  "break_types": [
+    {
+      "exception_type": "duplicate",
+      "cases": 2,
+      "break_value": 36516.99,
+      "share_of_value": 0.4317268036483685,
+      "cases_needing_an_entry": 2,
+      "agent_cost_usd": 0.258456
+    },
+    {
+      "exception_type": "timing_difference",
+      "cases": 3,
+      "break_value": 33390.85,
+      "share_of_value": 0.3947676120513253,
+      "cases_needing_an_entry": 0,
+      "agent_cost_usd": 0.236469
+    },
+    {
+      "exception_type": "missing_ledger_entry",
+      "cases": 2,
+      "break_value": 8764.63,
+      "share_of_value": 0.10362096369554556,
+      "cases_needing_an_entry": 2,
+      "agent_cost_usd": 0.193654
+    },
+    {
+      "exception_type": "amount_mismatch",
+      "cases": 3,
+      "break_value": 5427.0,
+      "share_of_value": 0.06416140441475861,
+      "cases_needing_an_entry": 3,
+      "agent_cost_usd": 0.314156
+    },
+    {
+      "exception_type": "fx_difference",
+      "cases": 3,
+      "break_value": 369.09,
+      "share_of_value": 0.004363613922138061,
+      "cases_needing_an_entry": 3,
+      "agent_cost_usd": 0.312907
+    },
+    {
+      "exception_type": "bank_fee",
+      "cases": 3,
+      "break_value": 115.0,
+      "share_of_value": 0.0013596022678638733,
+      "cases_needing_an_entry": 3,
+      "agent_cost_usd": 0.378352
+    }
+  ],
+  "runs": [
+    {
+      "run_id": "run-20260921-215025",
+      "model_requested": "claude-opus-5",
+      "started_at": "2026-09-21T21:50:25",
+      "cases": 1,
+      "completed_cases": 1,
+      "failed_cases": 0,
+      "completion_rate": 1.0,
+      "cost_usd": 0.145559,
+      "cost_per_case_usd": 0.145559,
+      "max_case_cost_usd": 0.145559,
+      "total_seconds": 38.23,
+      "avg_seconds_per_case": 38.23,
+      "median_seconds_per_case": 38.23,
+      "input_tokens": 10,
+      "output_tokens": 2675,
+      "steps": 5,
+      "tool_calls": 9,
+      "tool_errors": 0
+    },
+    {
+      "run_id": "run-20260921-215515",
+      "model_requested": "claude-opus-5",
+      "started_at": "2026-09-21T21:55:16",
+      "cases": 16,
+      "completed_cases": 16,
+      "failed_cases": 0,
+      "completion_rate": 1.0,
+      "cost_usd": 1.693994,
+      "cost_per_case_usd": 0.105874625,
+      "max_case_cost_usd": 0.141699,
+      "total_seconds": 2268.5099999999998,
+      "avg_seconds_per_case": 141.78187499999999,
+      "median_seconds_per_case": 32.305,
+      "input_tokens": 152,
+      "output_tokens": 28981,
+      "steps": 76,
+      "tool_calls": 89,
+      "tool_errors": 0
+    }
+  ],
+  "eval": {
+    "cases": 16,
+    "classification_accuracy": 1.0,
+    "fix_accuracy": 1.0,
+    "fully_correct": 1.0,
+    "total_cost_usd": 1.693994,
+    "cost_per_case_usd": 0.105874625,
+    "median_seconds": 32.305,
+    "tool_calls": 89,
+    "by_type": [
+      {
+        "expected_type": "amount_mismatch",
+        "correct": 3,
+        "total": 3,
+        "accuracy": 1.0
+      },
+      {
+        "expected_type": "bank_fee",
+        "correct": 3,
+        "total": 3,
+        "accuracy": 1.0
+      },
+      {
+        "expected_type": "duplicate",
+        "correct": 2,
+        "total": 2,
+        "accuracy": 1.0
+      },
+      {
+        "expected_type": "fx_difference",
+        "correct": 3,
+        "total": 3,
+        "accuracy": 1.0
+      },
+      {
+        "expected_type": "missing_ledger_entry",
+        "correct": 2,
+        "total": 2,
+        "accuracy": 1.0
+      },
+      {
+        "expected_type": "timing_difference",
+        "correct": 3,
+        "total": 3,
+        "accuracy": 1.0
+      }
+    ],
+    "confusion": {
+      "types": [
+        "amount_mismatch",
+        "bank_fee",
+        "duplicate",
+        "fx_difference",
+        "missing_ledger_entry",
+        "timing_difference"
+      ],
+      "predicted": [
+        "amount_mismatch",
+        "bank_fee",
+        "duplicate",
+        "fx_difference",
+        "missing_ledger_entry",
+        "timing_difference"
+      ],
+      "rows": [
+        [
+          3,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          3,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          2,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          3,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          2,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          3
+        ]
+      ]
+    }
+  }
+}
