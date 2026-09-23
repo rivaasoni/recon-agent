@@ -11,7 +11,7 @@ import sys
 import pytest
 
 from recon.config import settings
-from recon.mcp_server.stdio_check import SERVER
+from recon.mcp_server.launch import SERVER
 
 
 @pytest.mark.anyio

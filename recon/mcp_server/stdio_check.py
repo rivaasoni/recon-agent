@@ -19,23 +19,13 @@ Run it:
 from __future__ import annotations
 
 import json
-import sys
 
 import anyio
 from anthropic.lib.tools.mcp import async_mcp_tool
-from mcp import ClientSession, StdioServerParameters
+from mcp import ClientSession
 from mcp.client.stdio import stdio_client
 
-from recon.config import settings
-
-# How to launch the server: the same Python as this script (so the .venv is
-# used), running our server module, from the project root (so `recon`
-# can be imported).
-SERVER = StdioServerParameters(
-    command=sys.executable,
-    args=["-m", "recon.mcp_server.server"],
-    cwd=str(settings.project_root),
-)
+from recon.mcp_server.launch import SERVER
 
 
 async def main() -> None:

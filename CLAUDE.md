@@ -89,7 +89,7 @@ Phases are strictly sequential. Current status is tracked in the checkboxes belo
 - [x] **Phase 3 — Data pipeline.** Load raw files into DuckDB; dbt staging + cleaned models; dbt tests (not_null, unique, accepted_values). Built: `raw` schema (all VARCHAR + lineage cols, loaded by `recon/pipeline/load_raw.py`) → `staging` views → `cleaned` tables (`bank_transactions`, `gl_entries`, `documents`). `unique` on `gl_entries.reference` is severity **warn** on purpose — it flags the seeded duplicates (business exceptions, not pipeline errors). Later phases read ONLY from `cleaned`.
 - [x] **Phase 4 — Rule-based matching.** Match on amount, date window, and reference. Outputs a matched table and an exceptions table. Built as dbt models in the `matching` schema: `match_rule1_exact` (ref + amount + ±`match_date_window_days`, one-to-one, FIFO so the later duplicate posting is left over) and `exceptions` (one row per CASE: `both_sides` / `bank_only` / `ledger_only`, facts only — never a classification). A looser fallback rule was deliberately NOT built: every leftover is a real exception, so it could only create false matches. `python -m recon.matching.evaluate` scores it vs `data/eval/true_matches.csv` + answer key (currently 100% / 100%, 16/16 caught — expected on clean synthetic data).
 - [x] **Phase 5 — Agent tools as an MCP server.** Tools: (a) query ledger/bank tables, (b) search supporting documents, (c) propose a correcting journal entry (**proposal only, never executed**). Built in `recon/mcp_server/server.py`: 7 read-only tools (cases, bank/ledger rows with match status, reference lookup, document lookup/search) + `propose_journal_entry` (validates double entry with Decimal, appends to `settings.proposals_path` as `pending_human_approval`; never touches the warehouse). Tool list is locked by a test. Uses **mcp 2.x**: `from mcp.server.mcpserver import MCPServer` (NOT `FastMCP` — renamed in 2.x); errors via `ToolError`; tests use in-memory `mcp.Client(server)` + `@pytest.mark.anyio`. Phase 6 connects via `stdio_client` + `ClientSession` and `anthropic.lib.tools.mcp.async_mcp_tool` (see `recon/mcp_server/stdio_check.py`).
-- [ ] **Phase 6 — Agent loop.** Agent works each exception, calls tools, classifies, explains reasoning, drafts a fix. Every step logged as a trace.
+- [x] **Phase 6 — Agent loop.** Agent works each exception, calls tools, classifies, explains reasoning, drafts a fix. Every step logged as a trace. Built: `recon/agent/loop.py` (Tool Runner + MCP over stdio; adaptive thinking with `display: "summarized"`; prompt caching; `max_iterations=15`; trace written even on failure, with status `completed` / `no_proposal` / `hit_iteration_cap` / `refused` / `error`), `run_all.py` (batch with error isolation, per-case retries, `--max-cost` budget cap, `--resume <run_id>`), `show_trace.py` (readable trace viewer), `prompts.py` (system prompt: goal + rules + label definitions, deliberately NO per-type recipes). Traces: `data/processed/traces/<run_id>/<CASE>.json` + `_summary.json`. **Tests use a scripted fake Claude — the whole loop is tested with no API cost.** First full run: 16/16 completed, $1.69, ~38s/case.
 - [ ] **Phase 7 — Human-in-the-loop UI.** Streamlit: exception + reasoning trace + Approve / Reject.
 - [ ] **Phase 8 — Evaluation harness.** Agent classifications vs. answer key. Accuracy by exception type, confusion matrix, cost and latency per run, failure-case list.
 - [ ] **Phase 9 — Analytics layer.** Metrics tables: match rate, exceptions by type, dollar value of open breaks, resolution rate. Power BI ready.
@@ -132,6 +132,13 @@ python -m recon.matching.evaluate   # score the matcher against ground truth (ru
 python -m recon.mcp_server.call_tool                                   # list MCP tools
 python -m recon.mcp_server.call_tool get_exception_case case_id=CASE-005   # call one tool
 python -m recon.mcp_server.stdio_check  # connect to the server as a real subprocess (no API cost)
+
+# Phase 6 — these COST MONEY (~$0.10-0.15 per case on Opus 5):
+python -m recon.agent.hello_claude               # check the API key works (<$0.01)
+python -m recon.agent.run_case CASE-006          # one case, printing every step
+python -m recon.agent.run_all --max-cost 6       # all 16 cases (~$1.70)
+python -m recon.agent.run_all --resume RUN_ID    # finish an interrupted run (only unfinished cases)
+python -m recon.agent.show_trace CASE-006        # read a saved trace (free)
 python -c "from recon.config import settings; print(settings)"
 ```
 

@@ -58,6 +58,9 @@ class Settings:
     # Deliberately a separate file: the agent can never write to the warehouse.
     proposals_path: Path = PROJECT_ROOT / "data" / "processed" / "proposals.jsonl"
 
+    # Agent traces (Phase 6): one folder per run, one JSON file per case.
+    traces_dir: Path = PROJECT_ROOT / "data" / "processed" / "traces"
+
     # --- Model settings ----------------------------------------------------
     # Read from .env so you can switch models without editing code.
     model: str = field(default_factory=lambda: os.getenv("RECON_MODEL", "claude-opus-5"))
