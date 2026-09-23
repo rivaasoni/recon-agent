@@ -121,3 +121,22 @@ def test_demo_data_contains_no_secrets():
         text = path.read_text()
         assert "sk-ant" not in text, f"API key in {path}"
         assert "ANTHROPIC_API_KEY" not in text, f"key name in {path}"
+
+
+def test_demo_data_is_not_git_ignored():
+    """The published site serves files from the repo, so anything git ignores
+    is a 404 in production. This actually happened: a `traces/` rule with no
+    leading slash matched web/data/traces/ at any depth, and every reasoning
+    trace 404'd on the live site."""
+    import subprocess
+
+    web_data = real_settings.project_root / "web" / "data"
+    if not web_data.exists():
+        pytest.skip("web/data not built yet")
+
+    files = [str(p.relative_to(real_settings.project_root)) for p in web_data.rglob("*.json")]
+    # `git check-ignore` prints the paths it WOULD ignore; we want none.
+    result = subprocess.run(["git", "check-ignore", *files],
+                            cwd=real_settings.project_root, capture_output=True, text=True)
+    ignored = [line for line in result.stdout.splitlines() if line.strip()]
+    assert not ignored, f"git ignores demo files (they would 404 when deployed): {ignored[:3]}"

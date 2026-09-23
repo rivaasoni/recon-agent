@@ -1,0 +1,139 @@
+{
+  "case_id": "CASE-002",
+  "status": "completed",
+  "latency_seconds": 23.78,
+  "totals": {
+    "input_tokens": 8,
+    "output_tokens": 1776,
+    "cache_write_tokens": 6688,
+    "cache_read_tokens": 14145,
+    "cost_usd": 0.093313,
+    "tool_calls": 4,
+    "tool_errors": 0
+  },
+  "final_summary": "## Summary\n\n**Case CASE-002 \u2014 classified as `fx_difference`**\n\n**What happened:** A EUR 7,050.22 payment to Wilkerson-Day for BILL-5060 appears on both sides with the same foreign-currency amount, but different USD values:\n\n| | Rate | USD |\n|---|---|---|\n| Ledger GL-0025 (2026-08-05) | 1.1000 | \u22127,755.24 |\n| Bank BNK-0026 (2026-08-06) | 1.0879 | \u22127,669.93 |\n| Difference | | 85.31 |\n\n**Key evidence:**\n- **DOC-021** (vendor bill) confirms the obligation was EUR 7,050.22 \u2014 so the foreign amount is correct on both sides.\n- **DOC-004** (bank wire confirmation) independently confirms rate 1.0879, USD debited 7,669.93, and **wire fee USD 0.00** \u2014 ruling out a bank-fee component.\n- Only one bank line and one ledger entry carry this reference, ruling out a duplicate; the payment did clear in August, ruling out a timing difference.\n\n**Proposed fix (pending human approval \u2014 nothing posted):**\n- Debit 1000 Cash - Operating 85.31\n- Credit 7100 FX Gain/Loss 85.31\n\nThis brings recorded cash down to the actual 7,669.93 debited and books the realised FX gain from the more favourable bank rate. AP is left alone since the bill was settled in full.\n\n**Uncertainty:** minimal \u2014 the only minor point is the one-day gap between ledger posting (08-05) and bank value date (08-06), which is a normal settlement lag and doesn't affect the classification.",
+  "steps": [
+    {
+      "step": 1,
+      "stop_reason": "tool_use",
+      "model_seconds": 2.27,
+      "cost_usd": 0.027085000000000005,
+      "thinking": [],
+      "text": [
+        "I'll start by pulling the case details."
+      ],
+      "tool_calls": [
+        {
+          "id": "toolu_01Az22zjbnF8EnNVcxeTfP9H",
+          "name": "get_exception_case",
+          "input": {
+            "case_id": "CASE-002"
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"case_id\": \"CASE-002\",\n  \"case_shape\": \"both_sides\",\n  \"reference\": \"BILL-5060\",\n  \"case_date\": \"2026-08-06\",\n  \"bank_txn_id\": \"BNK-0026\",\n  \"bank_date\": \"2026-08-06\",\n  \"bank_description\": \"INTL WIRE OUT WILKERSON-DAY EUR 7,050.22 @1.0879\",\n  \"bank_amount\": -7669.93,\n  \"gl_entry_id\": \"GL-0025\",\n  \"ledger_date\": \"2026-08-05\",\n  \"ledger_counterparty\": \"Wilkerson-Day\",\n  \"ledger_description\": \"Vendor payment - Wilkerson-Day - BILL-5060 (EUR 7,050.22 @ 1.1000)\",\n  \"ledger_amount\": -7755.24,\n  \"ledger_currency\": \"EUR\",\n  \"ledger_foreign_amount\": 7050.22,\n  \"ledger_fx_rate\": 1.1,\n  \"amount_difference\": 85.31,\n  \"reference_matched_elsewhere\": false\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 2,
+      "stop_reason": "tool_use",
+      "model_seconds": 2.26,
+      "cost_usd": 0.008188,
+      "thinking": [
+        "I should check the docs and the actual rows to confirm this is an FX difference.\n\n"
+      ],
+      "text": [],
+      "tool_calls": [
+        {
+          "id": "toolu_01Pj2Cuenp4DAKg9dQjdJANp",
+          "name": "get_documents_for_reference",
+          "input": {
+            "reference": "BILL-5060"
+          }
+        },
+        {
+          "id": "toolu_01KoCR4ohQeyXVSz3Lz4Jtk5",
+          "name": "find_transactions_by_reference",
+          "input": {
+            "reference": "BILL-5060"
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"reference\": \"BILL-5060\",\n  \"count\": 2,\n  \"documents\": [\n    {\n      \"doc_id\": \"DOC-004\",\n      \"doc_type\": \"wire_confirmation\",\n      \"primary_reference\": \"BILL-5060\",\n      \"content\": \"DOCUMENT: Fictional Community Bank \u2014 Outgoing International Wire Confirmation\\nValue date: 2026-08-06\\nBeneficiary: Wilkerson-Day\\nPayment reference: BILL-5060\\nAmount sent: EUR 7,050.22\\nExchange rate applied: 1.0879\\nUSD debited from account: 7,669.93\\nWire fee: USD 0.00 (first international wire this month)\\n\"\n    },\n    {\n      \"doc_id\": \"DOC-021\",\n      \"doc_type\": \"vendor_bill\",\n      \"primary_reference\": \"BILL-5060\",\n      \"content\": \"DOCUMENT: Vendor bill\\nBill number: BILL-5060\\nVendor: Wilkerson-Day\\nIssue date: 2026-06-30\\nDue date: 2026-07-30\\nAmount due: EUR 7,050.22\\nTerms: Net 30\\n\"\n    }\n  ]\n}",
+          "truncated": false
+        },
+        {
+          "is_error": false,
+          "text": "{\n  \"reference\": \"BILL-5060\",\n  \"bank_transaction_count\": 1,\n  \"ledger_entry_count\": 1,\n  \"bank_transactions\": [\n    {\n      \"bank_txn_id\": \"BNK-0026\",\n      \"value_date\": \"2026-08-06\",\n      \"description\": \"INTL WIRE OUT WILKERSON-DAY EUR 7,050.22 @1.0879\",\n      \"reference\": \"BILL-5060\",\n      \"amount\": -7669.93,\n      \"direction\": \"outflow\",\n      \"channel\": \"intl_wire\",\n      \"match_status\": \"exception\",\n      \"matched_to_gl_entry_id\": null,\n      \"exception_case_id\": \"CASE-002\"\n    }\n  ],\n  \"ledger_entries\": [\n    {\n      \"gl_entry_id\": \"GL-0025\",\n      \"posting_date\": \"2026-08-05\",\n      \"counterparty\": \"Wilkerson-Day\",\n      \"description\": \"Vendor payment - Wilkerson-Day - BILL-5060 (EUR 7,050.22 @ 1.1000)\",\n      \"reference\": \"BILL-5060\",\n      \"amount\": -7755.24,\n      \"direction\": \"outflow\",\n      \"currency\": \"EUR\",\n      \"foreign_amount\": 7050.22,\n      \"fx_rate\": 1.1,\n      \"match_status\": \"exception\",\n      \"matched_to_bank_txn_id\": null,\n      \"exception_case_id\": \"CASE-002\"\n    }\n  ]\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 3,
+      "stop_reason": "tool_use",
+      "model_seconds": 11.76,
+      "cost_usd": 0.03433925,
+      "thinking": [
+        "I'm noticing the ledger recorded EUR 7,050.22 relieved against AP at 7,755.24 but only 7,669.93 cash was actually paid, so the difference of 85.31 represents an FX gain rather than an overstated outflow \u2014 I need to debit Cash and credit FX Gain accordingly.\n\nAlso confirming there's no wire fee mentioned in the documentation, so that's not a factor here.\n\n"
+      ],
+      "text": [],
+      "tool_calls": [
+        {
+          "id": "toolu_01FzYvNkzrFwrVwXdUzVW8Kr",
+          "name": "propose_journal_entry",
+          "input": {
+            "case_id": "CASE-002",
+            "classification": "fx_difference",
+            "evidence": [
+              "BNK-0026",
+              "GL-0025",
+              "DOC-004",
+              "DOC-021"
+            ],
+            "explanation": "Same transaction on both sides: a EUR 7,050.22 vendor payment to Wilkerson-Day for BILL-5060 (vendor bill DOC-021 confirms EUR 7,050.22 due). The foreign amount agrees exactly on both sides; only the USD translation differs. The ledger entry GL-0025 (2026-08-05) used an FX rate of 1.1000, giving USD 7,755.24. The bank actually applied 1.0879, debiting USD 7,669.93 on 2026-08-06 (BNK-0026), which the bank's wire confirmation DOC-004 corroborates (rate 1.0879, USD debited 7,669.93, wire fee USD 0.00 \u2014 so no bank-fee component). The 85.31 difference is therefore purely an exchange-rate difference, not a timing, duplicate or fee issue. Because less USD cash left the account than the ledger recorded, cash is understated by 85.31 and the company realised an FX gain. Proposed fix: debit 1000 Cash - Operating 85.31 to bring the cash balance to the actual bank amount of 7,669.93, and credit 7100 FX Gain/Loss 85.31 to record the realised gain. Accounts Payable is untouched, as the full EUR 7,050.22 bill was settled. Note: the one-day date gap (ledger 08-05 vs bank value date 08-06) is a normal settlement lag and does not change the classification.",
+            "lines": [
+              {
+                "account": "1000 Cash - Operating",
+                "debit": 85.31,
+                "memo": "Correct USD cash for BILL-5060 wire to actual bank debit 7,669.93 @1.0879"
+              },
+              {
+                "account": "7100 FX Gain/Loss",
+                "credit": 85.31,
+                "memo": "Realised FX gain: ledger rate 1.1000 vs bank rate 1.0879 on EUR 7,050.22"
+              }
+            ]
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"proposal_id\": \"PROP-AF77D0F4\",\n  \"status\": \"pending_human_approval\",\n  \"case_id\": \"CASE-002\",\n  \"message\": \"Recorded for human review. Nothing has been posted to the ledger.\"\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 4,
+      "stop_reason": "end_turn",
+      "model_seconds": 7.4,
+      "cost_usd": 0.02370025,
+      "thinking": [],
+      "text": [
+        "## Summary\n\n**Case CASE-002 \u2014 classified as `fx_difference`**\n\n**What happened:** A EUR 7,050.22 payment to Wilkerson-Day for BILL-5060 appears on both sides with the same foreign-currency amount, but different USD values:\n\n| | Rate | USD |\n|---|---|---|\n| Ledger GL-0025 (2026-08-05) | 1.1000 | \u22127,755.24 |\n| Bank BNK-0026 (2026-08-06) | 1.0879 | \u22127,669.93 |\n| Difference | | 85.31 |\n\n**Key evidence:**\n- **DOC-021** (vendor bill) confirms the obligation was EUR 7,050.22 \u2014 so the foreign amount is correct on both sides.\n- **DOC-004** (bank wire confirmation) independently confirms rate 1.0879, USD debited 7,669.93, and **wire fee USD 0.00** \u2014 ruling out a bank-fee component.\n- Only one bank line and one ledger entry carry this reference, ruling out a duplicate; the payment did clear in August, ruling out a timing difference.\n\n**Proposed fix (pending human approval \u2014 nothing posted):**\n- Debit 1000 Cash - Operating 85.31\n- Credit 7100 FX Gain/Loss 85.31\n\nThis brings recorded cash down to the actual 7,669.93 debited and books the realised FX gain from the more favourable bank rate. AP is left alone since the bill was settled in full.\n\n**Uncertainty:** minimal \u2014 the only minor point is the one-day gap between ledger posting (08-05) and bank value date (08-06), which is a normal settlement lag and doesn't affect the classification."
+      ],
+      "tool_calls": [],
+      "tool_results": []
+    }
+  ]
+}

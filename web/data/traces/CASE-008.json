@@ -1,0 +1,216 @@
+{
+  "case_id": "CASE-008",
+  "status": "completed",
+  "latency_seconds": 36.13,
+  "totals": {
+    "input_tokens": 12,
+    "output_tokens": 2182,
+    "cache_write_tokens": 10639,
+    "cache_read_tokens": 31951,
+    "cost_usd": 0.137079,
+    "tool_calls": 8,
+    "tool_errors": 0
+  },
+  "final_summary": "## Summary\n\n**Case CASE-008 \u2014 classification: `bank_fee`**\n\n**What I found**\n- BNK-0057: bank-only line, 2026-08-12, **-35.00**, \"INTL WIRE TRANSFER FEE\", channel `bank_charge`, no reference, no ledger counterpart.\n- DOC-007 (bank fee schedule): first outgoing international wire each calendar month is free, then **USD 35.00 per wire**, debited as separate statement lines.\n- Two international wires went out on 2026-08-12: BILL-5059 (DOC-012, BNK-0055) and BILL-5058 (DOC-025) \u2014 **both confirmations state \"Wire fee: USD 35.00, debited separately.\"**\n- The month's first wire, 2026-08-06 BILL-5060 (DOC-004), was charged USD 0.00.\n\n**Why not a duplicate:** there are two $35 fee lines on the statement (BNK-0056 = CASE-007, BNK-0057 = CASE-008), exactly one per chargeable wire on 12 Aug. So this second fee is genuine, not a double posting.\n\n**Proposed fix (pending human approval \u2014 nothing has been posted):**\n- Dr 6100 Bank Fees 35.00\n- Cr 1000 Cash - Operating 35.00\n\nNote for the reviewer: CASE-007 (BNK-0056) is the companion fee and should be treated the same way; the related FX differences on the wires themselves sit in CASE-005 and CASE-006.",
+  "steps": [
+    {
+      "step": 1,
+      "stop_reason": "tool_use",
+      "model_seconds": 2.39,
+      "cost_usd": 0.027085000000000005,
+      "thinking": [],
+      "text": [
+        "I'll start by pulling the case details."
+      ],
+      "tool_calls": [
+        {
+          "id": "toolu_01Y6VtQ4d1ME8yrVUeeSJdQm",
+          "name": "get_exception_case",
+          "input": {
+            "case_id": "CASE-008"
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"case_id\": \"CASE-008\",\n  \"case_shape\": \"bank_only\",\n  \"reference\": null,\n  \"case_date\": \"2026-08-12\",\n  \"bank_txn_id\": \"BNK-0057\",\n  \"bank_date\": \"2026-08-12\",\n  \"bank_description\": \"INTL WIRE TRANSFER FEE\",\n  \"bank_amount\": -35.0,\n  \"gl_entry_id\": null,\n  \"ledger_date\": null,\n  \"ledger_counterparty\": null,\n  \"ledger_description\": null,\n  \"ledger_amount\": null,\n  \"ledger_currency\": null,\n  \"ledger_foreign_amount\": null,\n  \"ledger_fx_rate\": null,\n  \"amount_difference\": null,\n  \"reference_matched_elsewhere\": false\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 2,
+      "stop_reason": "tool_use",
+      "model_seconds": 3.16,
+      "cost_usd": 0.0078255,
+      "thinking": [
+        "I'm noting there's a -35.00 international wire transfer fee that's bank-only, so I should check the supporting documents and the bank transaction to confirm.\n\n"
+      ],
+      "text": [],
+      "tool_calls": [
+        {
+          "id": "toolu_01SCzBtbinTHPhTFVtzCyxqq",
+          "name": "get_bank_transaction",
+          "input": {
+            "bank_txn_id": "BNK-0057"
+          }
+        },
+        {
+          "id": "toolu_01JY5TYkarTAXWeFsqQfF35E",
+          "name": "search_documents",
+          "input": {
+            "keywords": "wire fee"
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"bank_txn_id\": \"BNK-0057\",\n  \"value_date\": \"2026-08-12\",\n  \"description\": \"INTL WIRE TRANSFER FEE\",\n  \"reference\": null,\n  \"amount\": -35.0,\n  \"direction\": \"outflow\",\n  \"channel\": \"bank_charge\",\n  \"match_status\": \"exception\",\n  \"matched_to_gl_entry_id\": null,\n  \"exception_case_id\": \"CASE-008\"\n}",
+          "truncated": false
+        },
+        {
+          "is_error": false,
+          "text": "{\n  \"keywords\": [\n    \"wire\",\n    \"fee\"\n  ],\n  \"count\": 4,\n  \"documents\": [\n    {\n      \"doc_id\": \"DOC-004\",\n      \"doc_type\": \"wire_confirmation\",\n      \"primary_reference\": \"BILL-5060\",\n      \"content\": \"DOCUMENT: Fictional Community Bank \u2014 Outgoing International Wire Confirmation\\nValue date: 2026-08-06\\nBeneficiary: Wilkerson-Day\\nPayment reference: BILL-5060\\nAmount sent: EUR 7,050.22\\nExchange rate applied: 1.0879\\nUSD debited from account: 7,669.93\\nWire fee: USD 0.00 (first international wire this month)\\n\"\n    },\n    {\n      \"doc_id\": \"DOC-007\",\n      \"doc_type\": \"fee_schedule\",\n      \"primary_reference\": null,\n      \"content\": \"DOCUMENT: Fictional Community Bank \u2014 Business Checking Fee Schedule\\nEffective: 2026-01-01\\n\\nMonthly account service charge ........ USD 45.00, debited on the last business day of the month\\nIncoming ACH credit ................... no charge\\nOutgoing ACH debit .................... no charge\\nOutgoing international wire ........... first wire each calendar month free, then USD 35.00 per wire\\n\\nInternational wires are converted to USD at the bank's rate on the value date.\\nFees are debited as separate line items on the statement.\\n\"\n    },\n    {\n      \"doc_id\": \"DOC-012\",\n      \"doc_type\": \"wire_confirmation\",\n      \"primary_reference\": \"BILL-5059\",\n      \"content\": \"DOCUMENT: Fictional Community Bank \u2014 Outgoing International Wire Confirmation\\nValue date: 2026-08-12\\nBeneficiary: Gray-Mayo\\nPayment reference: BILL-5059\\nAmount sent: GBP 9,40",
+          "truncated": true
+        }
+      ]
+    },
+    {
+      "step": 3,
+      "stop_reason": "tool_use",
+      "model_seconds": 6.36,
+      "cost_usd": 0.017861250000000002,
+      "thinking": [
+        "Both wire confirmations from August 12 mention a $35 fee debited separately, but I only see one fee line in the bank records (BNK-0057). Since the first wire on August 6 was free and the fee schedule charges $35 for each subsequent wire, the two August 12 wires should generate two separate $35 fees\u2014yet I'm only seeing one -35 line. I need to check if there's a second matching fee entry I'm missing.\n\n"
+      ],
+      "text": [],
+      "tool_calls": [
+        {
+          "id": "toolu_01VxjEqjdSSVK1ieGbHU9pUE",
+          "name": "list_exception_cases",
+          "input": {}
+        },
+        {
+          "id": "toolu_01QTdHM2XCzc9ducgk3SQs2K",
+          "name": "find_transactions_by_reference",
+          "input": {
+            "reference": "BILL-5059"
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"count\": 16,\n  \"cases\": [\n    {\n      \"case_id\": \"CASE-001\",\n      \"case_shape\": \"bank_only\",\n      \"reference\": \"INV-1063\",\n      \"case_date\": \"2026-08-06\",\n      \"bank_amount\": 6595.32,\n      \"ledger_amount\": null,\n      \"amount_difference\": null\n    },\n    {\n      \"case_id\": \"CASE-002\",\n      \"case_shape\": \"both_sides\",\n      \"reference\": \"BILL-5060\",\n      \"case_date\": \"2026-08-06\",\n      \"bank_amount\": -7669.93,\n      \"ledger_amount\": -7755.24,\n      \"amount_difference\": 85.31\n    },\n    {\n      \"case_id\": \"CASE-003\",\n      \"case_shape\": \"both_sides\",\n      \"reference\": \"INV-1021\",\n      \"case_date\": \"2026-08-07\",\n      \"bank_amount\": 7678.07,\n      \"ledger_amount\": 6778.07,\n      \"amount_difference\": 900.0\n    },\n    {\n      \"case_id\": \"CASE-004\",\n      \"case_shape\": \"ledger_only\",\n      \"reference\": \"BILL-5051\",\n      \"case_date\": \"2026-08-10\",\n      \"bank_amount\": null,\n      \"ledger_amount\": -11541.85,\n      \"amount_difference\": null\n    },\n    {\n      \"case_id\": \"CASE-005\",\n      \"case_shape\": \"both_sides\",\n      \"reference\": \"BILL-5058\",\n      \"case_date\": \"2026-08-12\",\n      \"bank_amount\": -4268.42,\n      \"ledger_amount\": -4193.32,\n      \"amount_difference\": -75.1\n    },\n    {\n      \"case_id\": \"CASE-006\",\n      \"case_shape\": \"both_sides\",\n      \"reference\": \"BILL-5059\",\n      \"case_date\": \"2026-08-12\",\n      \"bank_amount\": -12241.08,\n      \"ledger_amount\": -12032.4,\n      \"amount_difference\": -208.68\n    },\n    {\n      \"case_id\": \"CASE-007\",\n      \"case_shape\"",
+          "truncated": true
+        },
+        {
+          "is_error": false,
+          "text": "{\n  \"reference\": \"BILL-5059\",\n  \"bank_transaction_count\": 1,\n  \"ledger_entry_count\": 1,\n  \"bank_transactions\": [\n    {\n      \"bank_txn_id\": \"BNK-0055\",\n      \"value_date\": \"2026-08-12\",\n      \"description\": \"INTL WIRE OUT GRAY-MAYO GBP 9,400.31 @1.3022\",\n      \"reference\": \"BILL-5059\",\n      \"amount\": -12241.08,\n      \"direction\": \"outflow\",\n      \"channel\": \"intl_wire\",\n      \"match_status\": \"exception\",\n      \"matched_to_gl_entry_id\": null,\n      \"exception_case_id\": \"CASE-006\"\n    }\n  ],\n  \"ledger_entries\": [\n    {\n      \"gl_entry_id\": \"GL-0063\",\n      \"posting_date\": \"2026-08-12\",\n      \"counterparty\": \"Gray-Mayo\",\n      \"description\": \"Vendor payment - Gray-Mayo - BILL-5059 (GBP 9,400.31 @ 1.2800)\",\n      \"reference\": \"BILL-5059\",\n      \"amount\": -12032.4,\n      \"direction\": \"outflow\",\n      \"currency\": \"GBP\",\n      \"foreign_amount\": 9400.31,\n      \"fx_rate\": 1.28,\n      \"match_status\": \"exception\",\n      \"matched_to_bank_txn_id\": null,\n      \"exception_case_id\": \"CASE-006\"\n    }\n  ]\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 4,
+      "stop_reason": "tool_use",
+      "model_seconds": 6.92,
+      "cost_usd": 0.02513725,
+      "thinking": [
+        "CASE-007 and CASE-008 both show -35 fees on 2026-08-12, matching two separate international wires (BILL-5059 and BILL-5058) that each incurred a USD 35.00 fee debited independently (DOC-012, DOC-025) -- so CASE-008 is legitimate, not a duplicate, since the Aug 6 wire was fee-free as the first of the month. Now I want to check CASE-007's bank transaction ID to confirm these are indeed two distinct fees.\n\n"
+      ],
+      "text": [],
+      "tool_calls": [
+        {
+          "id": "toolu_018s5fyKvSYiCyvVmLbEjfYb",
+          "name": "get_exception_case",
+          "input": {
+            "case_id": "CASE-007"
+          }
+        },
+        {
+          "id": "toolu_01Vrh5Lxcyb35ExkqdU7r2zD",
+          "name": "search_documents",
+          "input": {
+            "keywords": "fee"
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"case_id\": \"CASE-007\",\n  \"case_shape\": \"bank_only\",\n  \"reference\": null,\n  \"case_date\": \"2026-08-12\",\n  \"bank_txn_id\": \"BNK-0056\",\n  \"bank_date\": \"2026-08-12\",\n  \"bank_description\": \"INTL WIRE TRANSFER FEE\",\n  \"bank_amount\": -35.0,\n  \"gl_entry_id\": null,\n  \"ledger_date\": null,\n  \"ledger_counterparty\": null,\n  \"ledger_description\": null,\n  \"ledger_amount\": null,\n  \"ledger_currency\": null,\n  \"ledger_foreign_amount\": null,\n  \"ledger_fx_rate\": null,\n  \"amount_difference\": null,\n  \"reference_matched_elsewhere\": false\n}",
+          "truncated": false
+        },
+        {
+          "is_error": false,
+          "text": "{\n  \"keywords\": [\n    \"fee\"\n  ],\n  \"count\": 4,\n  \"documents\": [\n    {\n      \"doc_id\": \"DOC-004\",\n      \"doc_type\": \"wire_confirmation\",\n      \"primary_reference\": \"BILL-5060\",\n      \"content\": \"DOCUMENT: Fictional Community Bank \u2014 Outgoing International Wire Confirmation\\nValue date: 2026-08-06\\nBeneficiary: Wilkerson-Day\\nPayment reference: BILL-5060\\nAmount sent: EUR 7,050.22\\nExchange rate applied: 1.0879\\nUSD debited from account: 7,669.93\\nWire fee: USD 0.00 (first international wire this month)\\n\"\n    },\n    {\n      \"doc_id\": \"DOC-007\",\n      \"doc_type\": \"fee_schedule\",\n      \"primary_reference\": null,\n      \"content\": \"DOCUMENT: Fictional Community Bank \u2014 Business Checking Fee Schedule\\nEffective: 2026-01-01\\n\\nMonthly account service charge ........ USD 45.00, debited on the last business day of the month\\nIncoming ACH credit ................... no charge\\nOutgoing ACH debit .................... no charge\\nOutgoing international wire ........... first wire each calendar month free, then USD 35.00 per wire\\n\\nInternational wires are converted to USD at the bank's rate on the value date.\\nFees are debited as separate line items on the statement.\\n\"\n    },\n    {\n      \"doc_id\": \"DOC-012\",\n      \"doc_type\": \"wire_confirmation\",\n      \"primary_reference\": \"BILL-5059\",\n      \"content\": \"DOCUMENT: Fictional Community Bank \u2014 Outgoing International Wire Confirmation\\nValue date: 2026-08-12\\nBeneficiary: Gray-Mayo\\nPayment reference: BILL-5059\\nAmount sent: GBP 9,400.31\\nExchan",
+          "truncated": true
+        }
+      ]
+    },
+    {
+      "step": 5,
+      "stop_reason": "tool_use",
+      "model_seconds": 10.31,
+      "cost_usd": 0.0356075,
+      "thinking": [
+        "I see two separate bank lines, BNK-0056 and BNK-0057, each matching a distinct wire confirmation charging $35, so BNK-0057 is a legitimate second fee rather than a duplicate \u2014 I'll classify it as a bank fee, debiting Bank Fees 35 and crediting Cash 35. I also confirm BILL-5058's bank line exists, verifying the two separate wires from the CASE-005 listing.\n\n"
+      ],
+      "text": [],
+      "tool_calls": [
+        {
+          "id": "toolu_01JFeh1ZJWrxAn9bK36huLhB",
+          "name": "propose_journal_entry",
+          "input": {
+            "case_id": "CASE-008",
+            "classification": "bank_fee",
+            "evidence": [
+              "BNK-0057",
+              "BNK-0056",
+              "DOC-007",
+              "DOC-012",
+              "DOC-025",
+              "BNK-0055",
+              "DOC-004"
+            ],
+            "explanation": "BNK-0057 is a bank-only line dated 2026-08-12 for -35.00 described as 'INTL WIRE TRANSFER FEE', channel 'bank_charge', with no reference and no ledger counterpart. The bank's fee schedule (DOC-007) states the first outgoing international wire each calendar month is free and each subsequent wire costs USD 35.00, debited as a separate statement line. Two international wires were sent on 2026-08-12: BILL-5059 to Gray-Mayo (DOC-012, BNK-0055) and BILL-5058 to Ross, Robinson and Bright (DOC-025) \u2014 each confirmation states 'Wire fee: USD 35.00, debited separately'. The month's first wire on 2026-08-06 (BILL-5060, DOC-004) was charged USD 0.00. Two $35 fee lines therefore exist on the statement (BNK-0056 = CASE-007 and BNK-0057 = CASE-008), one per chargeable wire, so this is a genuine second fee rather than a duplicate posting. The charge was never recorded in the ledger, so the ledger should recognise the bank fee expense and reduce cash by 35.00.",
+            "lines": [
+              {
+                "account": "6100 Bank Fees",
+                "debit": 35.0,
+                "memo": "Intl wire transfer fee 2026-08-12 (BNK-0057), second chargeable wire of the month per DOC-007"
+              },
+              {
+                "account": "1000 Cash - Operating",
+                "credit": 35.0,
+                "memo": "Bank charge debited by Fictional Community Bank, BNK-0057"
+              }
+            ]
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"proposal_id\": \"PROP-0530EEAE\",\n  \"status\": \"pending_human_approval\",\n  \"case_id\": \"CASE-008\",\n  \"message\": \"Recorded for human review. Nothing has been posted to the ledger.\"\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 6,
+      "stop_reason": "end_turn",
+      "model_seconds": 6.84,
+      "cost_usd": 0.02356275,
+      "thinking": [],
+      "text": [
+        "## Summary\n\n**Case CASE-008 \u2014 classification: `bank_fee`**\n\n**What I found**\n- BNK-0057: bank-only line, 2026-08-12, **-35.00**, \"INTL WIRE TRANSFER FEE\", channel `bank_charge`, no reference, no ledger counterpart.\n- DOC-007 (bank fee schedule): first outgoing international wire each calendar month is free, then **USD 35.00 per wire**, debited as separate statement lines.\n- Two international wires went out on 2026-08-12: BILL-5059 (DOC-012, BNK-0055) and BILL-5058 (DOC-025) \u2014 **both confirmations state \"Wire fee: USD 35.00, debited separately.\"**\n- The month's first wire, 2026-08-06 BILL-5060 (DOC-004), was charged USD 0.00.\n\n**Why not a duplicate:** there are two $35 fee lines on the statement (BNK-0056 = CASE-007, BNK-0057 = CASE-008), exactly one per chargeable wire on 12 Aug. So this second fee is genuine, not a double posting.\n\n**Proposed fix (pending human approval \u2014 nothing has been posted):**\n- Dr 6100 Bank Fees 35.00\n- Cr 1000 Cash - Operating 35.00\n\nNote for the reviewer: CASE-007 (BNK-0056) is the companion fee and should be treated the same way; the related FX differences on the wires themselves sit in CASE-005 and CASE-006."
+      ],
+      "tool_calls": [],
+      "tool_results": []
+    }
+  ]
+}

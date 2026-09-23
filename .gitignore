@@ -22,9 +22,12 @@ data/**
 *.duckdb.wal
 *.db
 
-# Agent run artifacts (traces, eval results) — regenerated on every run
-traces/
-eval_results/
+# Agent run artifacts (traces, eval results) — regenerated on every run.
+# The leading slash matters: it anchors these to the repo root. Without it,
+# `traces/` would match a folder of that name at ANY depth — which silently
+# ignored web/data/traces/ (the committed demo data) and 404'd the live site.
+/traces/
+/eval_results/
 
 # ---------------------------------------------------------------------------
 # Python

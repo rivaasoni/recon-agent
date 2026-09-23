@@ -1,0 +1,129 @@
+{
+  "case_id": "CASE-013",
+  "status": "completed",
+  "latency_seconds": 21.8,
+  "totals": {
+    "input_tokens": 8,
+    "output_tokens": 1364,
+    "cache_write_tokens": 6027,
+    "cache_read_tokens": 13737,
+    "cost_usd": 0.078677,
+    "tool_calls": 4,
+    "tool_errors": 0
+  },
+  "final_summary": "## Summary\n\n**Case CASE-013 \u2014 classification: `timing_difference`**\n\n**What I found**\n- The case is ledger-only: **GL-0123** records an 8,707.63 USD outflow to Ross, Robinson and Bright for **BILL-5056** on 2026-08-28.\n- A reference search found **zero bank lines** carrying BILL-5056, and the reference was not matched elsewhere.\n- **DOC-013** (vendor bill) confirms the amount due is USD 8,707.63 \u2014 the ledger amount agrees.\n- **DOC-017** (AP payment run) shows the payment was released by ACH on 2026-08-28 with a **scheduled settlement date of 2026-09-01** \u2014 after the 2026-08-31 statement cut-off.\n\n**Why timing, not something else:** the transaction is genuine, recorded once, and at the correct amount; it simply had not settled at the bank by period end. That rules out missing_ledger_entry, duplicate and amount_mismatch.\n\n**Proposed fix:** no correcting journal entry (empty lines). The item should be carried as an outstanding ACH payment in the August bank reconciliation and confirmed as cleared on the September statement. One caveat noted in the proposal: the 2026-09-01 settlement date comes from the AP run schedule, so if no bank debit appears in September the item should be revisited.\n\nThis is recorded as proposal **PROP-9A8DCC17**, pending human approval \u2014 nothing has been posted.",
+  "steps": [
+    {
+      "step": 1,
+      "stop_reason": "tool_use",
+      "model_seconds": 2.71,
+      "cost_usd": 0.027085000000000005,
+      "thinking": [],
+      "text": [
+        "I'll start by pulling the case details."
+      ],
+      "tool_calls": [
+        {
+          "id": "toolu_011CoUnCBPoq4vTDaaDTbvrL",
+          "name": "get_exception_case",
+          "input": {
+            "case_id": "CASE-013"
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"case_id\": \"CASE-013\",\n  \"case_shape\": \"ledger_only\",\n  \"reference\": \"BILL-5056\",\n  \"case_date\": \"2026-08-28\",\n  \"bank_txn_id\": null,\n  \"bank_date\": null,\n  \"bank_description\": null,\n  \"bank_amount\": null,\n  \"gl_entry_id\": \"GL-0123\",\n  \"ledger_date\": \"2026-08-28\",\n  \"ledger_counterparty\": \"Ross, Robinson and Bright\",\n  \"ledger_description\": \"Vendor payment - Ross, Robinson and Bright - BILL-5056\",\n  \"ledger_amount\": -8707.63,\n  \"ledger_currency\": \"USD\",\n  \"ledger_foreign_amount\": null,\n  \"ledger_fx_rate\": null,\n  \"amount_difference\": null,\n  \"reference_matched_elsewhere\": false\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 2,
+      "stop_reason": "tool_use",
+      "model_seconds": 3.3,
+      "cost_usd": 0.00744425,
+      "thinking": [
+        "I should dig deeper into this before concluding.\n\n"
+      ],
+      "text": [],
+      "tool_calls": [
+        {
+          "id": "toolu_01ENtc7PiCfi3bMjK3aD5ZXN",
+          "name": "find_transactions_by_reference",
+          "input": {
+            "reference": "BILL-5056"
+          }
+        },
+        {
+          "id": "toolu_01Ktzny4L32YJwHMmatuE517",
+          "name": "get_documents_for_reference",
+          "input": {
+            "reference": "BILL-5056"
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"reference\": \"BILL-5056\",\n  \"bank_transaction_count\": 0,\n  \"ledger_entry_count\": 1,\n  \"bank_transactions\": [],\n  \"ledger_entries\": [\n    {\n      \"gl_entry_id\": \"GL-0123\",\n      \"posting_date\": \"2026-08-28\",\n      \"counterparty\": \"Ross, Robinson and Bright\",\n      \"description\": \"Vendor payment - Ross, Robinson and Bright - BILL-5056\",\n      \"reference\": \"BILL-5056\",\n      \"amount\": -8707.63,\n      \"direction\": \"outflow\",\n      \"currency\": \"USD\",\n      \"foreign_amount\": null,\n      \"fx_rate\": null,\n      \"match_status\": \"exception\",\n      \"matched_to_bank_txn_id\": null,\n      \"exception_case_id\": \"CASE-013\"\n    }\n  ]\n}",
+          "truncated": false
+        },
+        {
+          "is_error": false,
+          "text": "{\n  \"reference\": \"BILL-5056\",\n  \"count\": 2,\n  \"documents\": [\n    {\n      \"doc_id\": \"DOC-013\",\n      \"doc_type\": \"vendor_bill\",\n      \"primary_reference\": \"BILL-5056\",\n      \"content\": \"DOCUMENT: Vendor bill\\nBill number: BILL-5056\\nVendor: Ross, Robinson and Bright\\nIssue date: 2026-08-08\\nDue date: 2026-09-07\\nAmount due: USD 8,707.63\\nTerms: Net 30\\n\"\n    },\n    {\n      \"doc_id\": \"DOC-017\",\n      \"doc_type\": \"ap_payment_run\",\n      \"primary_reference\": \"BILL-5056\",\n      \"content\": \"DOCUMENT: Accounts payable payment run\\nRun date: 2026-08-28\\nBill: BILL-5056\\nVendor: Ross, Robinson and Bright\\nAmount: USD 8,707.63\\nPayment method: ACH\\nScheduled settlement date: 2026-09-01\\n\"\n    }\n  ]\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 3,
+      "stop_reason": "tool_use",
+      "model_seconds": 9.13,
+      "cost_usd": 0.024489250000000004,
+      "thinking": [
+        "This looks like a straightforward timing difference \u2014 the ACH payment was initiated 8/28 but settles 9/1, falling after the statement period closes, so no correcting entry is needed here. I don't think I need to dig up bank documentation to confirm settlement; I can move forward with this conclusion.\n\n"
+      ],
+      "text": [
+        "Evidence is clear. Proposing resolution:"
+      ],
+      "tool_calls": [
+        {
+          "id": "toolu_017mzMZLQgdMmRjN1zs23ktZ",
+          "name": "propose_journal_entry",
+          "input": {
+            "case_id": "CASE-013",
+            "classification": "timing_difference",
+            "evidence": [
+              "GL-0123",
+              "DOC-013",
+              "DOC-017"
+            ],
+            "explanation": "Ledger-only exception. GL-0123 records a USD 8,707.63 outflow to Ross, Robinson and Bright for BILL-5056 on 2026-08-28, and no bank line anywhere carries reference BILL-5056 (find_transactions_by_reference returns 0 bank transactions; the reference is not matched elsewhere). The supporting documents confirm the ledger amount is correct: vendor bill DOC-013 shows USD 8,707.63 due, and AP payment run DOC-017 shows the same USD 8,707.63 paid by ACH with a run date of 2026-08-28 but a scheduled settlement date of 2026-09-01. Settlement therefore falls after the 2026-08-31 statement cut-off, so the payment is an outstanding ACH in transit that will clear on the September statement. This is a pure timing difference, not a missing or mis-stated transaction: the ledger already reflects what happened at the correct amount, so no correcting journal entry is needed. It should be carried as an outstanding payment in the bank reconciliation and confirmed as cleared next period. (Uncertainty: settlement on 2026-09-01 is the vendor/AP-run schedule; if no bank debit appears in September, the item should be revisited.)",
+            "lines": []
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"proposal_id\": \"PROP-9A8DCC17\",\n  \"status\": \"pending_human_approval\",\n  \"case_id\": \"CASE-013\",\n  \"message\": \"Recorded for human review. Nothing has been posted to the ledger.\"\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 4,
+      "stop_reason": "end_turn",
+      "model_seconds": 6.43,
+      "cost_usd": 0.01965875,
+      "thinking": [],
+      "text": [
+        "## Summary\n\n**Case CASE-013 \u2014 classification: `timing_difference`**\n\n**What I found**\n- The case is ledger-only: **GL-0123** records an 8,707.63 USD outflow to Ross, Robinson and Bright for **BILL-5056** on 2026-08-28.\n- A reference search found **zero bank lines** carrying BILL-5056, and the reference was not matched elsewhere.\n- **DOC-013** (vendor bill) confirms the amount due is USD 8,707.63 \u2014 the ledger amount agrees.\n- **DOC-017** (AP payment run) shows the payment was released by ACH on 2026-08-28 with a **scheduled settlement date of 2026-09-01** \u2014 after the 2026-08-31 statement cut-off.\n\n**Why timing, not something else:** the transaction is genuine, recorded once, and at the correct amount; it simply had not settled at the bank by period end. That rules out missing_ledger_entry, duplicate and amount_mismatch.\n\n**Proposed fix:** no correcting journal entry (empty lines). The item should be carried as an outstanding ACH payment in the August bank reconciliation and confirmed as cleared on the September statement. One caveat noted in the proposal: the 2026-09-01 settlement date comes from the AP run schedule, so if no bank debit appears in September the item should be revisited.\n\nThis is recorded as proposal **PROP-9A8DCC17**, pending human approval \u2014 nothing has been posted."
+      ],
+      "tool_calls": [],
+      "tool_results": []
+    }
+  ]
+}

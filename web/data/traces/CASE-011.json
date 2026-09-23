@@ -1,0 +1,175 @@
+{
+  "case_id": "CASE-011",
+  "status": "completed",
+  "latency_seconds": 28.96,
+  "totals": {
+    "input_tokens": 10,
+    "output_tokens": 1588,
+    "cache_write_tokens": 6527,
+    "cache_read_tokens": 19214,
+    "cost_usd": 0.090151,
+    "tool_calls": 6,
+    "tool_errors": 0
+  },
+  "final_summary": "**Summary \u2014 CASE-011**\n\n- **Classification:** `missing_ledger_entry`\n- **What I found:** The case is bank-only. BNK-0086 (2026-08-19) is an ACH debit of USD 2,169.31 referencing BILL-5057, payee \"Adams, Zuniga and Wong\". A reference search for BILL-5057 returns one bank line and **no** ledger entries, and the reference isn't matched anywhere else. DOC-010, the vendor bill, shows BILL-5057 from Adams, Zuniga and Wong for exactly USD 2,169.31 (issued 2026-07-28, due 2026-08-27) \u2014 amount, payee and reference all agree with the bank line.\n- **Why not something else:** Only one bank line and no ledger rows, so it can't be a duplicate; the amount matches a real vendor bill, so it isn't a bank fee; both sides are USD, so no FX element; and it cleared within the statement period, so it isn't a timing difference.\n- **Proposed fix (pending human approval, nothing posted):** Debit 2000 Accounts Payable 2,169.31 / Credit 1000 Cash - Operating 2,169.31 to record the payment of BILL-5057. Proposal ID PROP-01E14CC5.",
+  "steps": [
+    {
+      "step": 1,
+      "stop_reason": "tool_use",
+      "model_seconds": 2.41,
+      "cost_usd": 0.027085000000000005,
+      "thinking": [],
+      "text": [
+        "I'll start by pulling the case details."
+      ],
+      "tool_calls": [
+        {
+          "id": "toolu_01XZDs5zjsxKScL2aCE57UiZ",
+          "name": "get_exception_case",
+          "input": {
+            "case_id": "CASE-011"
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"case_id\": \"CASE-011\",\n  \"case_shape\": \"bank_only\",\n  \"reference\": \"BILL-5057\",\n  \"case_date\": \"2026-08-19\",\n  \"bank_txn_id\": \"BNK-0086\",\n  \"bank_date\": \"2026-08-19\",\n  \"bank_description\": \"ACH DEBIT ADAMS, ZUNIGA AND WONG\",\n  \"bank_amount\": -2169.31,\n  \"gl_entry_id\": null,\n  \"ledger_date\": null,\n  \"ledger_counterparty\": null,\n  \"ledger_description\": null,\n  \"ledger_amount\": null,\n  \"ledger_currency\": null,\n  \"ledger_foreign_amount\": null,\n  \"ledger_fx_rate\": null,\n  \"amount_difference\": null,\n  \"reference_matched_elsewhere\": false\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 2,
+      "stop_reason": "tool_use",
+      "model_seconds": 2.29,
+      "cost_usd": 0.007756750000000001,
+      "thinking": [
+        "I'm focusing on bank-only for BILL-5057, checking the references and related documents.\n\n"
+      ],
+      "text": [],
+      "tool_calls": [
+        {
+          "id": "toolu_01DXDDfQmQqoi8MyZTcNLzuu",
+          "name": "find_transactions_by_reference",
+          "input": {
+            "reference": "BILL-5057"
+          }
+        },
+        {
+          "id": "toolu_01BVnkyppzyMUrDfCN4NJeEX",
+          "name": "get_documents_for_reference",
+          "input": {
+            "reference": "BILL-5057"
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"reference\": \"BILL-5057\",\n  \"bank_transaction_count\": 1,\n  \"ledger_entry_count\": 0,\n  \"bank_transactions\": [\n    {\n      \"bank_txn_id\": \"BNK-0086\",\n      \"value_date\": \"2026-08-19\",\n      \"description\": \"ACH DEBIT ADAMS, ZUNIGA AND WONG\",\n      \"reference\": \"BILL-5057\",\n      \"amount\": -2169.31,\n      \"direction\": \"outflow\",\n      \"channel\": \"ach\",\n      \"match_status\": \"exception\",\n      \"matched_to_gl_entry_id\": null,\n      \"exception_case_id\": \"CASE-011\"\n    }\n  ],\n  \"ledger_entries\": []\n}",
+          "truncated": false
+        },
+        {
+          "is_error": false,
+          "text": "{\n  \"reference\": \"BILL-5057\",\n  \"count\": 1,\n  \"documents\": [\n    {\n      \"doc_id\": \"DOC-010\",\n      \"doc_type\": \"vendor_bill\",\n      \"primary_reference\": \"BILL-5057\",\n      \"content\": \"DOCUMENT: Vendor bill\\nBill number: BILL-5057\\nVendor: Adams, Zuniga and Wong\\nIssue date: 2026-07-28\\nDue date: 2026-08-27\\nAmount due: USD 2,169.31\\nTerms: Net 30\\n\"\n    }\n  ]\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 3,
+      "stop_reason": "tool_use",
+      "model_seconds": 4.01,
+      "cost_usd": 0.01144475,
+      "thinking": [
+        "That $2169.31 bank debit matches the vendor bill exactly, but there's no corresponding ledger entry \u2014 this could be a duplicate payment, so I should check if Adams Zuniga Wong was paid elsewhere by searching the AP payment runs.\n\n"
+      ],
+      "text": [],
+      "tool_calls": [
+        {
+          "id": "toolu_013EE8KTYNcKNHR9pcDMVNz3",
+          "name": "search_documents",
+          "input": {
+            "keywords": "Adams Zuniga Wong"
+          }
+        },
+        {
+          "id": "toolu_012k2tsZSD69zr6mz5nRXN9R",
+          "name": "get_bank_transaction",
+          "input": {
+            "bank_txn_id": "BNK-0086"
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"keywords\": [\n    \"adams\",\n    \"zuniga\",\n    \"wong\"\n  ],\n  \"count\": 1,\n  \"documents\": [\n    {\n      \"doc_id\": \"DOC-010\",\n      \"doc_type\": \"vendor_bill\",\n      \"primary_reference\": \"BILL-5057\",\n      \"content\": \"DOCUMENT: Vendor bill\\nBill number: BILL-5057\\nVendor: Adams, Zuniga and Wong\\nIssue date: 2026-07-28\\nDue date: 2026-08-27\\nAmount due: USD 2,169.31\\nTerms: Net 30\\n\"\n    }\n  ]\n}",
+          "truncated": false
+        },
+        {
+          "is_error": false,
+          "text": "{\n  \"bank_txn_id\": \"BNK-0086\",\n  \"value_date\": \"2026-08-19\",\n  \"description\": \"ACH DEBIT ADAMS, ZUNIGA AND WONG\",\n  \"reference\": \"BILL-5057\",\n  \"amount\": -2169.31,\n  \"direction\": \"outflow\",\n  \"channel\": \"ach\",\n  \"match_status\": \"exception\",\n  \"matched_to_gl_entry_id\": null,\n  \"exception_case_id\": \"CASE-011\"\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 4,
+      "stop_reason": "tool_use",
+      "model_seconds": 14.83,
+      "cost_usd": 0.025154750000000003,
+      "thinking": [
+        "This looks like a genuine payment that cleared the bank but was never recorded in the ledger\u2014a missing ledger entry. Since there's no corresponding ledger-side count to duplicate against, I'll propose the correcting entry: debit AP $2169.31, credit Cash $2169.31.\n\n"
+      ],
+      "text": [],
+      "tool_calls": [
+        {
+          "id": "toolu_01DRBZvHC11kygEZRW412Mrj",
+          "name": "propose_journal_entry",
+          "input": {
+            "case_id": "CASE-011",
+            "classification": "missing_ledger_entry",
+            "evidence": [
+              "BNK-0086",
+              "DOC-010"
+            ],
+            "explanation": "Bank line BNK-0086 (2026-08-19, ACH debit of USD 2,169.31, reference BILL-5057, payee 'ADAMS, ZUNIGA AND WONG') cleared the operating account during the statement period, but a reference search for BILL-5057 returns zero ledger entries, and the case shows the reference is not matched elsewhere. Supporting document DOC-010 is the vendor bill from Adams, Zuniga and Wong for BILL-5057, amount due USD 2,169.31, issue date 2026-07-28, due date 2026-08-27 \u2014 exactly the amount and payee of the bank debit, so this is a genuine settlement of a real payable rather than a duplicate or a bank charge. Because the payment cleared the bank but was never booked, the ledger needs the payment recorded: debit Accounts Payable to clear the liability for BILL-5057 and credit Cash - Operating for the outflow. Nothing suggests a duplicate (only one bank line and no ledger rows) or an FX element (bill and bank debit are both USD).",
+            "lines": [
+              {
+                "account": "2000 Accounts Payable",
+                "debit": 2169.31,
+                "memo": "Settle BILL-5057 - Adams, Zuniga and Wong (per DOC-010)"
+              },
+              {
+                "account": "1000 Cash - Operating",
+                "credit": 2169.31,
+                "memo": "ACH debit BNK-0086 2026-08-19 not recorded in ledger"
+              }
+            ]
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"proposal_id\": \"PROP-01E14CC5\",\n  \"status\": \"pending_human_approval\",\n  \"case_id\": \"CASE-011\",\n  \"message\": \"Recorded for human review. Nothing has been posted to the ledger.\"\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 5,
+      "stop_reason": "end_turn",
+      "model_seconds": 5.27,
+      "cost_usd": 0.0187095,
+      "thinking": [],
+      "text": [
+        "**Summary \u2014 CASE-011**\n\n- **Classification:** `missing_ledger_entry`\n- **What I found:** The case is bank-only. BNK-0086 (2026-08-19) is an ACH debit of USD 2,169.31 referencing BILL-5057, payee \"Adams, Zuniga and Wong\". A reference search for BILL-5057 returns one bank line and **no** ledger entries, and the reference isn't matched anywhere else. DOC-010, the vendor bill, shows BILL-5057 from Adams, Zuniga and Wong for exactly USD 2,169.31 (issued 2026-07-28, due 2026-08-27) \u2014 amount, payee and reference all agree with the bank line.\n- **Why not something else:** Only one bank line and no ledger rows, so it can't be a duplicate; the amount matches a real vendor bill, so it isn't a bank fee; both sides are USD, so no FX element; and it cleared within the statement period, so it isn't a timing difference.\n- **Proposed fix (pending human approval, nothing posted):** Debit 2000 Accounts Payable 2,169.31 / Credit 1000 Cash - Operating 2,169.31 to record the payment of BILL-5057. Proposal ID PROP-01E14CC5."
+      ],
+      "tool_calls": [],
+      "tool_results": []
+    }
+  ]
+}

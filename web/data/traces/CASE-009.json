@@ -1,0 +1,168 @@
+{
+  "case_id": "CASE-009",
+  "status": "completed",
+  "latency_seconds": 37.53,
+  "totals": {
+    "input_tokens": 10,
+    "output_tokens": 1846,
+    "cache_write_tokens": 6989,
+    "cache_read_tokens": 20036,
+    "cost_usd": 0.099899,
+    "tool_calls": 5,
+    "tool_errors": 0
+  },
+  "final_summary": "## Summary\n\n**Case:** CASE-009 \u2014 BILL-5043, Reid, Ferguson and Sanchez, 2026-08-14\n\n**Classification:** `amount_mismatch`\n\n**Key evidence:**\n- **DOC-020** (vendor bill): amount due USD 12,784.20\n- **BNK-0071**: ACH debit of **-12,784.20** on 2026-08-14 \u2014 matches the bill exactly\n- **GL-0072**: ledger entry of **-17,284.20** on the same date, same vendor, same reference \u2014 overstated by 4,500.00 (consistent with a transposition of 12,784.20 \u2192 17,284.20)\n- Only one bank line and one ledger entry carry this reference, and it isn't matched elsewhere, ruling out duplicate/timing; the entry is USD with no FX data, ruling out an FX difference.\n\n**Proposed fix (pending human approval \u2014 nothing has been posted):**\n- Debit 1000 Cash - Operating 4,500.00\n- Credit 2000 Accounts Payable 4,500.00\n\nThis reduces the recorded cash outflow to the 12,784.20 that actually left the bank and reverses the matching over-debit of Accounts Payable.\n\nOne caveat for the reviewer: there is no remittance advice or AP payment run for this bill, so the correction relies on the vendor bill and the bank line \u2014 which do agree with each other.",
+  "steps": [
+    {
+      "step": 1,
+      "stop_reason": "tool_use",
+      "model_seconds": 3.54,
+      "cost_usd": 0.027085000000000005,
+      "thinking": [],
+      "text": [
+        "I'll start by pulling the case details."
+      ],
+      "tool_calls": [
+        {
+          "id": "toolu_015rYvKjHjd9MymnMTJ8CSvB",
+          "name": "get_exception_case",
+          "input": {
+            "case_id": "CASE-009"
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"case_id\": \"CASE-009\",\n  \"case_shape\": \"both_sides\",\n  \"reference\": \"BILL-5043\",\n  \"case_date\": \"2026-08-14\",\n  \"bank_txn_id\": \"BNK-0071\",\n  \"bank_date\": \"2026-08-14\",\n  \"bank_description\": \"ACH DEBIT REID, FERGUSON AND SANCHEZ\",\n  \"bank_amount\": -12784.2,\n  \"gl_entry_id\": \"GL-0072\",\n  \"ledger_date\": \"2026-08-14\",\n  \"ledger_counterparty\": \"Reid, Ferguson and Sanchez\",\n  \"ledger_description\": \"Vendor payment - Reid, Ferguson and Sanchez - BILL-5043\",\n  \"ledger_amount\": -17284.2,\n  \"ledger_currency\": \"USD\",\n  \"ledger_foreign_amount\": null,\n  \"ledger_fx_rate\": null,\n  \"amount_difference\": 4500.0,\n  \"reference_matched_elsewhere\": false\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 2,
+      "stop_reason": "tool_use",
+      "model_seconds": 3.33,
+      "cost_usd": 0.009538000000000001,
+      "thinking": [
+        "That $4500 gap looks like a digit transposition \u2014 12784.20 versus 17284.20, with the 2 and 7 swapped. I should check the source documents to confirm which figure is correct.\n\n"
+      ],
+      "text": [
+        "Both sides exist with a $4,500 difference. Let me check the underlying records and documents."
+      ],
+      "tool_calls": [
+        {
+          "id": "toolu_01LyE5QuDsxUaRoE9R5NZRUM",
+          "name": "find_transactions_by_reference",
+          "input": {
+            "reference": "BILL-5043"
+          }
+        },
+        {
+          "id": "toolu_01FYHxLEkkjznMfuiEVmKcM2",
+          "name": "get_documents_for_reference",
+          "input": {
+            "reference": "BILL-5043"
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"reference\": \"BILL-5043\",\n  \"bank_transaction_count\": 1,\n  \"ledger_entry_count\": 1,\n  \"bank_transactions\": [\n    {\n      \"bank_txn_id\": \"BNK-0071\",\n      \"value_date\": \"2026-08-14\",\n      \"description\": \"ACH DEBIT REID, FERGUSON AND SANCHEZ\",\n      \"reference\": \"BILL-5043\",\n      \"amount\": -12784.2,\n      \"direction\": \"outflow\",\n      \"channel\": \"ach\",\n      \"match_status\": \"exception\",\n      \"matched_to_gl_entry_id\": null,\n      \"exception_case_id\": \"CASE-009\"\n    }\n  ],\n  \"ledger_entries\": [\n    {\n      \"gl_entry_id\": \"GL-0072\",\n      \"posting_date\": \"2026-08-14\",\n      \"counterparty\": \"Reid, Ferguson and Sanchez\",\n      \"description\": \"Vendor payment - Reid, Ferguson and Sanchez - BILL-5043\",\n      \"reference\": \"BILL-5043\",\n      \"amount\": -17284.2,\n      \"direction\": \"outflow\",\n      \"currency\": \"USD\",\n      \"foreign_amount\": null,\n      \"fx_rate\": null,\n      \"match_status\": \"exception\",\n      \"matched_to_bank_txn_id\": null,\n      \"exception_case_id\": \"CASE-009\"\n    }\n  ]\n}",
+          "truncated": false
+        },
+        {
+          "is_error": false,
+          "text": "{\n  \"reference\": \"BILL-5043\",\n  \"count\": 1,\n  \"documents\": [\n    {\n      \"doc_id\": \"DOC-020\",\n      \"doc_type\": \"vendor_bill\",\n      \"primary_reference\": \"BILL-5043\",\n      \"content\": \"DOCUMENT: Vendor bill\\nBill number: BILL-5043\\nVendor: Reid, Ferguson and Sanchez\\nIssue date: 2026-07-07\\nDue date: 2026-08-06\\nAmount due: USD 12,784.20\\nTerms: Net 30\\n\"\n    }\n  ]\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 3,
+      "stop_reason": "tool_use",
+      "model_seconds": 5.27,
+      "cost_usd": 0.016189750000000003,
+      "thinking": [
+        "The vendor bill was 12,784.20 but the ledger recorded 17,284.20 \u2014 a transposition error overstating the payment by 4,500. To correct it, I need to debit Accounts Payable and credit Cash by 4,500 to bring the ledger back in line with the actual amount paid.\n\n"
+      ],
+      "text": [],
+      "tool_calls": [
+        {
+          "id": "toolu_01DQSLB1BbzueecqeFM4U138",
+          "name": "search_documents",
+          "input": {
+            "keywords": "Reid, Ferguson and Sanchez"
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"keywords\": [\n    \"reid,\",\n    \"ferguson\",\n    \"and\",\n    \"sanchez\"\n  ],\n  \"count\": 2,\n  \"documents\": [\n    {\n      \"doc_id\": \"DOC-015\",\n      \"doc_type\": \"vendor_bill\",\n      \"primary_reference\": \"BILL-5018\",\n      \"content\": \"DOCUMENT: Vendor bill\\nBill number: BILL-5018\\nVendor: Reid, Ferguson and Sanchez\\nIssue date: 2026-07-26\\nDue date: 2026-08-25\\nAmount due: USD 14,708.58\\nTerms: Net 30\\n\"\n    },\n    {\n      \"doc_id\": \"DOC-020\",\n      \"doc_type\": \"vendor_bill\",\n      \"primary_reference\": \"BILL-5043\",\n      \"content\": \"DOCUMENT: Vendor bill\\nBill number: BILL-5043\\nVendor: Reid, Ferguson and Sanchez\\nIssue date: 2026-07-07\\nDue date: 2026-08-06\\nAmount due: USD 12,784.20\\nTerms: Net 30\\n\"\n    }\n  ]\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 4,
+      "stop_reason": "tool_use",
+      "model_seconds": 9.76,
+      "cost_usd": 0.026995,
+      "thinking": [
+        "This confirms the bank amount matches the bill amount, meaning the ledger figure is overstated\u2014so I'll classify this as an amount mismatch.\n\n"
+      ],
+      "text": [
+        "The evidence is consistent \u2014 the bank paid exactly the bill amount, and the ledger is overstated."
+      ],
+      "tool_calls": [
+        {
+          "id": "toolu_017SYjgoT8AHFBx5XXFAA63j",
+          "name": "propose_journal_entry",
+          "input": {
+            "case_id": "CASE-009",
+            "classification": "amount_mismatch",
+            "explanation": "Same transaction on both sides (reference BILL-5043, same date 2026-08-14, same vendor Reid, Ferguson and Sanchez, same ACH outflow direction), but the USD amounts differ by 4,500.00. The vendor bill DOC-020 states the amount due is USD 12,784.20, and the bank line BNK-0071 cleared for exactly -12,784.20, so the bank agrees with the source document. The ledger entry GL-0072 was posted at -17,284.20, i.e. 4,500.00 too much; the figure looks like a keying/transposition error (12,784.20 recorded as 17,284.20). There is only one bank line and one ledger entry for this reference and the reference is not matched elsewhere, so this is not a duplicate or a timing issue, and the account is USD with no FX data, so it is not an FX difference. Correcting entry restores the 4,500.00 overstated cash outflow and reverses the corresponding over-debit of Accounts Payable, leaving the ledger showing a 12,784.20 payment that agrees with the bank. Note: no AP payment run or remittance document exists for this bill, so the correction rests on the vendor bill and the bank line, which agree with each other.",
+            "evidence": [
+              "BNK-0071",
+              "GL-0072",
+              "DOC-020"
+            ],
+            "lines": [
+              {
+                "account": "1000 Cash - Operating",
+                "debit": 4500.0,
+                "memo": "Reverse 4,500.00 overstatement of BILL-5043 payment (GL-0072 vs BNK-0071)"
+              },
+              {
+                "account": "2000 Accounts Payable",
+                "credit": 4500.0,
+                "memo": "Restore AP over-debited on BILL-5043; bill per DOC-020 is 12,784.20"
+              }
+            ]
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"proposal_id\": \"PROP-8C077E50\",\n  \"status\": \"pending_human_approval\",\n  \"case_id\": \"CASE-009\",\n  \"message\": \"Recorded for human review. Nothing has been posted to the ledger.\"\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 5,
+      "stop_reason": "end_turn",
+      "model_seconds": 15.37,
+      "cost_usd": 0.0200915,
+      "thinking": [],
+      "text": [
+        "## Summary\n\n**Case:** CASE-009 \u2014 BILL-5043, Reid, Ferguson and Sanchez, 2026-08-14\n\n**Classification:** `amount_mismatch`\n\n**Key evidence:**\n- **DOC-020** (vendor bill): amount due USD 12,784.20\n- **BNK-0071**: ACH debit of **-12,784.20** on 2026-08-14 \u2014 matches the bill exactly\n- **GL-0072**: ledger entry of **-17,284.20** on the same date, same vendor, same reference \u2014 overstated by 4,500.00 (consistent with a transposition of 12,784.20 \u2192 17,284.20)\n- Only one bank line and one ledger entry carry this reference, and it isn't matched elsewhere, ruling out duplicate/timing; the entry is USD with no FX data, ruling out an FX difference.\n\n**Proposed fix (pending human approval \u2014 nothing has been posted):**\n- Debit 1000 Cash - Operating 4,500.00\n- Credit 2000 Accounts Payable 4,500.00\n\nThis reduces the recorded cash outflow to the 12,784.20 that actually left the bank and reverses the matching over-debit of Accounts Payable.\n\nOne caveat for the reviewer: there is no remittance advice or AP payment run for this bill, so the correction relies on the vendor bill and the bank line \u2014 which do agree with each other."
+      ],
+      "tool_calls": [],
+      "tool_results": []
+    }
+  ]
+}

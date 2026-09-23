@@ -1,0 +1,167 @@
+{
+  "case_id": "CASE-006",
+  "status": "completed",
+  "latency_seconds": 31.37,
+  "totals": {
+    "input_tokens": 8,
+    "output_tokens": 2235,
+    "cache_write_tokens": 7630,
+    "cache_read_tokens": 14750,
+    "cost_usd": 0.110978,
+    "tool_calls": 6,
+    "tool_errors": 0
+  },
+  "final_summary": "## Summary\n\n**Classification: fx_difference**\n\n**What happened:** BILL-5059 (Gray-Mayo vendor payment) appears once on each side, both dated 2026-08-12, both for GBP 9,400.31 \u2014 but the USD amounts differ by 208.68 (bank \u221212,241.08 vs ledger \u221212,032.40).\n\n**Key evidence:**\n- **BNK-0055** / **DOC-012** (bank wire confirmation): bank applied rate **1.3022**, debiting USD 12,241.08.\n- **GL-0063**: accountant booked the same GBP amount at rate **1.2800** = USD 12,032.40.\n- The rate gap explains the variance exactly: 9,400.31 \u00d7 (1.3022 \u2212 1.2800) = 208.69, matching the 208.68 difference within a rounding cent.\n- **DOC-005** (vendor bill): amount due was GBP 9,400.31, so the vendor was paid correctly and in full \u2014 this is not an amount error, duplicate, or timing issue.\n\n**Proposed fix (pending human approval \u2014 nothing has been posted):**\n- Debit 7100 FX Gain/Loss 208.68\n- Credit 1000 Cash - Operating 208.68\n\nThis recognises the unfavourable rate movement and brings ledger cash in line with the USD actually debited.\n\n**One flag for the reviewer:** DOC-012 mentions a USD 35.00 wire fee \"debited separately.\" It is not part of this 208.68 difference and is out of scope here, but it's worth confirming that fee was either matched already or raised as its own exception.",
+  "steps": [
+    {
+      "step": 1,
+      "stop_reason": "tool_use",
+      "model_seconds": 2.5,
+      "cost_usd": 0.027085000000000005,
+      "thinking": [],
+      "text": [
+        "I'll start by pulling the case details."
+      ],
+      "tool_calls": [
+        {
+          "id": "toolu_01R24jXPBqgqQNMoket7JRpS",
+          "name": "get_exception_case",
+          "input": {
+            "case_id": "CASE-006"
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"case_id\": \"CASE-006\",\n  \"case_shape\": \"both_sides\",\n  \"reference\": \"BILL-5059\",\n  \"case_date\": \"2026-08-12\",\n  \"bank_txn_id\": \"BNK-0055\",\n  \"bank_date\": \"2026-08-12\",\n  \"bank_description\": \"INTL WIRE OUT GRAY-MAYO GBP 9,400.31 @1.3022\",\n  \"bank_amount\": -12241.08,\n  \"gl_entry_id\": \"GL-0063\",\n  \"ledger_date\": \"2026-08-12\",\n  \"ledger_counterparty\": \"Gray-Mayo\",\n  \"ledger_description\": \"Vendor payment - Gray-Mayo - BILL-5059 (GBP 9,400.31 @ 1.2800)\",\n  \"ledger_amount\": -12032.4,\n  \"ledger_currency\": \"GBP\",\n  \"ledger_foreign_amount\": 9400.31,\n  \"ledger_fx_rate\": 1.28,\n  \"amount_difference\": -208.68,\n  \"reference_matched_elsewhere\": false\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 2,
+      "stop_reason": "tool_use",
+      "model_seconds": 4.61,
+      "cost_usd": 0.012119250000000002,
+      "thinking": [
+        "There's a clear FX difference here, so I should verify it against the bank transaction, ledger entry, and supporting documents.\n\n"
+      ],
+      "text": [
+        "Both sides exist with the same GBP amount but different FX rates. Let me verify."
+      ],
+      "tool_calls": [
+        {
+          "id": "toolu_01JTwVo2Z1ashXBeteAnd2tY",
+          "name": "get_bank_transaction",
+          "input": {
+            "bank_txn_id": "BNK-0055"
+          }
+        },
+        {
+          "id": "toolu_01461AdNpgA7RXWSG7PGYDPV",
+          "name": "get_ledger_entry",
+          "input": {
+            "gl_entry_id": "GL-0063"
+          }
+        },
+        {
+          "id": "toolu_01GYTsAmDtzrstWTQr4Xj1E5",
+          "name": "find_transactions_by_reference",
+          "input": {
+            "reference": "BILL-5059"
+          }
+        },
+        {
+          "id": "toolu_01E38dYUejvMp7Le6f1nZBbK",
+          "name": "get_documents_for_reference",
+          "input": {
+            "reference": "BILL-5059"
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"bank_txn_id\": \"BNK-0055\",\n  \"value_date\": \"2026-08-12\",\n  \"description\": \"INTL WIRE OUT GRAY-MAYO GBP 9,400.31 @1.3022\",\n  \"reference\": \"BILL-5059\",\n  \"amount\": -12241.08,\n  \"direction\": \"outflow\",\n  \"channel\": \"intl_wire\",\n  \"match_status\": \"exception\",\n  \"matched_to_gl_entry_id\": null,\n  \"exception_case_id\": \"CASE-006\"\n}",
+          "truncated": false
+        },
+        {
+          "is_error": false,
+          "text": "{\n  \"gl_entry_id\": \"GL-0063\",\n  \"posting_date\": \"2026-08-12\",\n  \"counterparty\": \"Gray-Mayo\",\n  \"description\": \"Vendor payment - Gray-Mayo - BILL-5059 (GBP 9,400.31 @ 1.2800)\",\n  \"reference\": \"BILL-5059\",\n  \"amount\": -12032.4,\n  \"direction\": \"outflow\",\n  \"currency\": \"GBP\",\n  \"foreign_amount\": 9400.31,\n  \"fx_rate\": 1.28,\n  \"match_status\": \"exception\",\n  \"matched_to_bank_txn_id\": null,\n  \"exception_case_id\": \"CASE-006\"\n}",
+          "truncated": false
+        },
+        {
+          "is_error": false,
+          "text": "{\n  \"reference\": \"BILL-5059\",\n  \"bank_transaction_count\": 1,\n  \"ledger_entry_count\": 1,\n  \"bank_transactions\": [\n    {\n      \"bank_txn_id\": \"BNK-0055\",\n      \"value_date\": \"2026-08-12\",\n      \"description\": \"INTL WIRE OUT GRAY-MAYO GBP 9,400.31 @1.3022\",\n      \"reference\": \"BILL-5059\",\n      \"amount\": -12241.08,\n      \"direction\": \"outflow\",\n      \"channel\": \"intl_wire\",\n      \"match_status\": \"exception\",\n      \"matched_to_gl_entry_id\": null,\n      \"exception_case_id\": \"CASE-006\"\n    }\n  ],\n  \"ledger_entries\": [\n    {\n      \"gl_entry_id\": \"GL-0063\",\n      \"posting_date\": \"2026-08-12\",\n      \"counterparty\": \"Gray-Mayo\",\n      \"description\": \"Vendor payment - Gray-Mayo - BILL-5059 (GBP 9,400.31 @ 1.2800)\",\n      \"reference\": \"BILL-5059\",\n      \"amount\": -12032.4,\n      \"direction\": \"outflow\",\n      \"currency\": \"GBP\",\n      \"foreign_amount\": 9400.31,\n      \"fx_rate\": 1.28,\n      \"match_status\": \"exception\",\n      \"matched_to_bank_txn_id\": null,\n      \"exception_case_id\": \"CASE-006\"\n    }\n  ]\n}",
+          "truncated": false
+        },
+        {
+          "is_error": false,
+          "text": "{\n  \"reference\": \"BILL-5059\",\n  \"count\": 2,\n  \"documents\": [\n    {\n      \"doc_id\": \"DOC-005\",\n      \"doc_type\": \"vendor_bill\",\n      \"primary_reference\": \"BILL-5059\",\n      \"content\": \"DOCUMENT: Vendor bill\\nBill number: BILL-5059\\nVendor: Gray-Mayo\\nIssue date: 2026-07-16\\nDue date: 2026-08-15\\nAmount due: GBP 9,400.31\\nTerms: Net 30\\n\"\n    },\n    {\n      \"doc_id\": \"DOC-012\",\n      \"doc_type\": \"wire_confirmation\",\n      \"primary_reference\": \"BILL-5059\",\n      \"content\": \"DOCUMENT: Fictional Community Bank \u2014 Outgoing International Wire Confirmation\\nValue date: 2026-08-12\\nBeneficiary: Gray-Mayo\\nPayment reference: BILL-5059\\nAmount sent: GBP 9,400.31\\nExchange rate applied: 1.3022\\nUSD debited from account: 12,241.08\\nWire fee: USD 35.00, debited separately\\n\"\n    }\n  ]\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 3,
+      "stop_reason": "tool_use",
+      "model_seconds": 16.32,
+      "cost_usd": 0.0465065,
+      "thinking": [
+        "The wire fee looks like it belongs to a separate bank line, not this case, so I'll set that aside and stay focused on CASE-006. I confirm the discrepancy is pure FX: 9400.31 times the rate difference of 0.0222 gives exactly 208.68.\n\nThe correcting entry is a credit to cash for 208.68 and a debit to FX Gain/Loss for the same amount. I'll propose this.\n\n"
+      ],
+      "text": [
+        "The math confirms a pure rate difference: 9,400.31 \u00d7 (1.3022 \u2212 1.2800) = 208.69 \u2248 208.68. The $35 wire fee was debited separately, so it isn't part of this difference."
+      ],
+      "tool_calls": [
+        {
+          "id": "toolu_019CdfyxqkqhpjMrjzqNoWQQ",
+          "name": "propose_journal_entry",
+          "input": {
+            "case_id": "CASE-006",
+            "classification": "fx_difference",
+            "evidence": [
+              "BNK-0055",
+              "GL-0063",
+              "DOC-005",
+              "DOC-012"
+            ],
+            "explanation": "Same transaction on both sides: vendor payment to Gray-Mayo for BILL-5059, value date 2026-08-12 on both the bank line (BNK-0055) and the ledger entry (GL-0063), same reference, same foreign amount of GBP 9,400.31. Only the USD amount differs: bank -12,241.08 vs ledger -12,032.40, a difference of 208.68.\\n\\nThe cause is the exchange rate, not the underlying transaction. The bank description and the wire confirmation (DOC-012) both show the bank applied a rate of 1.3022 (GBP 9,400.31 x 1.3022 = USD 12,241.08 debited), while the accountant booked the entry at 1.2800 (GBP 9,400.31 x 1.2800 = USD 12,032.40). The rate gap alone explains the variance exactly: 9,400.31 x (1.3022 - 1.2800) = 208.69, matching the 208.68 difference to a rounding cent.\\n\\nThe vendor bill (DOC-005) confirms the obligation was GBP 9,400.31, so the foreign-currency amount paid was correct and in full - there is no over- or underpayment, no duplicate (only one bank line and one ledger entry carry this reference), and no timing issue (both dated 2026-08-12, within the statement period).\\n\\nFix: recognise the unfavourable FX movement. Debit 7100 FX Gain/Loss 208.68 and credit 1000 Cash - Operating 208.68, bringing ledger cash for this payment to the 12,241.08 actually debited by the bank.\\n\\nOne separate note for the reviewer: DOC-012 states a wire fee of USD 35.00 was \"debited separately\". That fee is not part of this 208.68 difference and is outside the scope of this case; it should be confirmed as either already matched or picked up as its own exception.",
+            "lines": [
+              {
+                "account": "7100 FX Gain/Loss",
+                "debit": 208.68,
+                "memo": "FX loss on BILL-5059 GBP 9,400.31: bank rate 1.3022 vs ledger rate 1.2800"
+              },
+              {
+                "account": "1000 Cash - Operating",
+                "credit": 208.68,
+                "memo": "Adjust cash to actual USD debited per BNK-0055 / DOC-012 (12,241.08)"
+              }
+            ]
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"proposal_id\": \"PROP-2D99B2D9\",\n  \"status\": \"pending_human_approval\",\n  \"case_id\": \"CASE-006\",\n  \"message\": \"Recorded for human review. Nothing has been posted to the ledger.\"\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 4,
+      "stop_reason": "end_turn",
+      "model_seconds": 7.35,
+      "cost_usd": 0.02526675,
+      "thinking": [],
+      "text": [
+        "## Summary\n\n**Classification: fx_difference**\n\n**What happened:** BILL-5059 (Gray-Mayo vendor payment) appears once on each side, both dated 2026-08-12, both for GBP 9,400.31 \u2014 but the USD amounts differ by 208.68 (bank \u221212,241.08 vs ledger \u221212,032.40).\n\n**Key evidence:**\n- **BNK-0055** / **DOC-012** (bank wire confirmation): bank applied rate **1.3022**, debiting USD 12,241.08.\n- **GL-0063**: accountant booked the same GBP amount at rate **1.2800** = USD 12,032.40.\n- The rate gap explains the variance exactly: 9,400.31 \u00d7 (1.3022 \u2212 1.2800) = 208.69, matching the 208.68 difference within a rounding cent.\n- **DOC-005** (vendor bill): amount due was GBP 9,400.31, so the vendor was paid correctly and in full \u2014 this is not an amount error, duplicate, or timing issue.\n\n**Proposed fix (pending human approval \u2014 nothing has been posted):**\n- Debit 7100 FX Gain/Loss 208.68\n- Credit 1000 Cash - Operating 208.68\n\nThis recognises the unfavourable rate movement and brings ledger cash in line with the USD actually debited.\n\n**One flag for the reviewer:** DOC-012 mentions a USD 35.00 wire fee \"debited separately.\" It is not part of this 208.68 difference and is out of scope here, but it's worth confirming that fee was either matched already or raised as its own exception."
+      ],
+      "tool_calls": [],
+      "tool_results": []
+    }
+  ]
+}

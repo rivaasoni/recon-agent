@@ -1,0 +1,183 @@
+{
+  "case_id": "CASE-012",
+  "status": "completed",
+  "latency_seconds": 627.77,
+  "totals": {
+    "input_tokens": 10,
+    "output_tokens": 2034,
+    "cache_write_tokens": 13411,
+    "cache_read_tokens": 13960,
+    "cost_usd": 0.141699,
+    "tool_calls": 6,
+    "tool_errors": 0
+  },
+  "final_summary": "## Summary\n\n**Case CASE-012 \u2014 classified as `duplicate`** (proposal `PROP-B04461E2`, pending human approval; nothing has been posted).\n\n**What I found**\n\nThe reference INV-1031 appears **once at the bank but twice in the ledger**:\n\n| Side | ID | Date | Amount | Status |\n|---|---|---|---|---|\n| Bank | BNK-0094 | 2026-08-21 | +24,975.14 | matched \u2192 GL-0090 |\n| Ledger | GL-0090 | 2026-08-20 | +24,975.14 | matched \u2192 BNK-0094 |\n| Ledger | GL-0091 | 2026-08-20 | +24,975.14 | **exception (this case)** |\n\nGL-0090 and GL-0091 are identical in date, amount, counterparty (Abbott-Munoz) and description. The invoice DOC-029 shows total amount due of USD 24,975.14, which the single ACH credit settled in full \u2014 so no second receipt is outstanding. That rules out a timing difference: the ledger simply records 49,950.28 of cash against a 24,975.14 invoice.\n\n**Proposed fix** \u2014 reverse the duplicate posting GL-0091:\n- Dr 1200 Accounts Receivable 24,975.14\n- Cr 1000 Cash - Operating 24,975.14\n\nThis brings recorded cash back in line with BNK-0094 and leaves AR for INV-1031 relieved exactly once.\n\n**Confidence:** high. The only mild caveat worth flagging to the reviewer is that the two ledger entries are indistinguishable from each other, so the choice to reverse GL-0091 rather than GL-0090 is arbitrary \u2014 it's simply the one the matcher left unpaired, and the net effect on the accounts is the same either way.",
+  "steps": [
+    {
+      "step": 1,
+      "stop_reason": "tool_use",
+      "model_seconds": 2.17,
+      "cost_usd": 0.027085000000000005,
+      "thinking": [],
+      "text": [
+        "I'll start by pulling the case details."
+      ],
+      "tool_calls": [
+        {
+          "id": "toolu_018PKHzTgC2MsuYuRoZzyPtL",
+          "name": "get_exception_case",
+          "input": {
+            "case_id": "CASE-012"
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"case_id\": \"CASE-012\",\n  \"case_shape\": \"ledger_only\",\n  \"reference\": \"INV-1031\",\n  \"case_date\": \"2026-08-20\",\n  \"bank_txn_id\": null,\n  \"bank_date\": null,\n  \"bank_description\": null,\n  \"bank_amount\": null,\n  \"gl_entry_id\": \"GL-0091\",\n  \"ledger_date\": \"2026-08-20\",\n  \"ledger_counterparty\": \"Abbott-Munoz\",\n  \"ledger_description\": \"Customer payment - Abbott-Munoz - INV-1031\",\n  \"ledger_amount\": 24975.14,\n  \"ledger_currency\": \"USD\",\n  \"ledger_foreign_amount\": null,\n  \"ledger_fx_rate\": null,\n  \"amount_difference\": null,\n  \"reference_matched_elsewhere\": true\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 2,
+      "stop_reason": "tool_use",
+      "model_seconds": 3.74,
+      "cost_usd": 0.008763,
+      "thinking": [
+        "This one's only in the ledger with no matching reference elsewhere, so I should search for all transactions and documents tied to INV-1031.\n\n"
+      ],
+      "text": [
+        "Ledger-only case with the reference matched elsewhere \u2014 let me look at the full picture."
+      ],
+      "tool_calls": [
+        {
+          "id": "toolu_011ps7xxoHEnbfyZazHZFifB",
+          "name": "find_transactions_by_reference",
+          "input": {
+            "reference": "INV-1031"
+          }
+        },
+        {
+          "id": "toolu_012GpGsmFZLevDRsozdyqBg6",
+          "name": "get_documents_for_reference",
+          "input": {
+            "reference": "INV-1031"
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"reference\": \"INV-1031\",\n  \"bank_transaction_count\": 1,\n  \"ledger_entry_count\": 2,\n  \"bank_transactions\": [\n    {\n      \"bank_txn_id\": \"BNK-0094\",\n      \"value_date\": \"2026-08-21\",\n      \"description\": \"ACH CREDIT ABBOTT-MUNOZ\",\n      \"reference\": \"INV-1031\",\n      \"amount\": 24975.14,\n      \"direction\": \"inflow\",\n      \"channel\": \"ach\",\n      \"match_status\": \"matched\",\n      \"matched_to_gl_entry_id\": \"GL-0090\",\n      \"exception_case_id\": null\n    }\n  ],\n  \"ledger_entries\": [\n    {\n      \"gl_entry_id\": \"GL-0090\",\n      \"posting_date\": \"2026-08-20\",\n      \"counterparty\": \"Abbott-Munoz\",\n      \"description\": \"Customer payment - Abbott-Munoz - INV-1031\",\n      \"reference\": \"INV-1031\",\n      \"amount\": 24975.14,\n      \"direction\": \"inflow\",\n      \"currency\": \"USD\",\n      \"foreign_amount\": null,\n      \"fx_rate\": null,\n      \"match_status\": \"matched\",\n      \"matched_to_bank_txn_id\": \"BNK-0094\",\n      \"exception_case_id\": null\n    },\n    {\n      \"gl_entry_id\": \"GL-0091\",\n      \"posting_date\": \"2026-08-20\",\n      \"counterparty\": \"Abbott-Munoz\",\n      \"description\": \"Customer payment - Abbott-Munoz - INV-1031\",\n      \"reference\": \"INV-1031\",\n      \"amount\": 24975.14,\n      \"direction\": \"inflow\",\n      \"currency\": \"USD\",\n      \"foreign_amount\": null,\n      \"fx_rate\": null,\n      \"match_status\": \"exception\",\n      \"matched_to_bank_txn_id\": null,\n      \"exception_case_id\": \"CASE-012\"\n    }\n  ]\n}",
+          "truncated": false
+        },
+        {
+          "is_error": false,
+          "text": "{\n  \"reference\": \"INV-1031\",\n  \"count\": 1,\n  \"documents\": [\n    {\n      \"doc_id\": \"DOC-029\",\n      \"doc_type\": \"customer_invoice\",\n      \"primary_reference\": \"INV-1031\",\n      \"content\": \"DOCUMENT: Customer invoice\\nInvoice number: INV-1031\\nCustomer: Abbott-Munoz\\nIssue date: 2026-07-31\\nDue date: 2026-08-30\\nAmount due: USD 24,975.14\\nTerms: Net 30\\n\"\n    }\n  ]\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 3,
+      "stop_reason": "tool_use",
+      "model_seconds": 5.11,
+      "cost_usd": 0.016816000000000005,
+      "thinking": [
+        "I've confirmed this is a clear duplicate: the invoice for 24,975.14 matches one bank receipt already linked to GL-0090, so GL-0091 is a redundant ledger entry that needs reversal \u2014 crediting Cash 24,975.14 and debiting Accounts Receivable 24,975.14 to undo the original entry. I'm now double-checking the bank transaction and ledger statuses to confirm before finalizing.\n\n"
+      ],
+      "text": [
+        "The picture is clear. Let me confirm the bank side and the duplicate entry itself."
+      ],
+      "tool_calls": [
+        {
+          "id": "toolu_0154ido6j975Uo8n9dPHZWqv",
+          "name": "get_bank_transaction",
+          "input": {
+            "bank_txn_id": "BNK-0094"
+          }
+        },
+        {
+          "id": "toolu_013NbayQGPbux4j1LbAfaZtW",
+          "name": "get_ledger_entry",
+          "input": {
+            "gl_entry_id": "GL-0091"
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"bank_txn_id\": \"BNK-0094\",\n  \"value_date\": \"2026-08-21\",\n  \"description\": \"ACH CREDIT ABBOTT-MUNOZ\",\n  \"reference\": \"INV-1031\",\n  \"amount\": 24975.14,\n  \"direction\": \"inflow\",\n  \"channel\": \"ach\",\n  \"match_status\": \"matched\",\n  \"matched_to_gl_entry_id\": \"GL-0090\",\n  \"exception_case_id\": null\n}",
+          "truncated": false
+        },
+        {
+          "is_error": false,
+          "text": "{\n  \"gl_entry_id\": \"GL-0091\",\n  \"posting_date\": \"2026-08-20\",\n  \"counterparty\": \"Abbott-Munoz\",\n  \"description\": \"Customer payment - Abbott-Munoz - INV-1031\",\n  \"reference\": \"INV-1031\",\n  \"amount\": 24975.14,\n  \"direction\": \"inflow\",\n  \"currency\": \"USD\",\n  \"foreign_amount\": null,\n  \"fx_rate\": null,\n  \"match_status\": \"exception\",\n  \"matched_to_bank_txn_id\": null,\n  \"exception_case_id\": \"CASE-012\"\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 4,
+      "stop_reason": "tool_use",
+      "model_seconds": 10.53,
+      "cost_usd": 0.02917475,
+      "thinking": [
+        "This looks like a duplicate entry, so I should reverse it by debiting AR and crediting Cash for 24,975.14.\n\n"
+      ],
+      "text": [
+        "Evidence is consistent \u2014 the invoice was only ever paid once. Proposing the fix."
+      ],
+      "tool_calls": [
+        {
+          "id": "toolu_018xA8b8qMtBzQ4Ag1WLTkp8",
+          "name": "propose_journal_entry",
+          "input": {
+            "case_id": "CASE-012",
+            "classification": "duplicate",
+            "evidence": [
+              "GL-0091",
+              "GL-0090",
+              "BNK-0094",
+              "DOC-029"
+            ],
+            "explanation": "Invoice INV-1031 (DOC-029, Abbott-Munoz, USD 24,975.14, issued 2026-07-31) was paid once, but recorded twice in the ledger.\\n\\nFindings: the reference INV-1031 carries exactly ONE bank line (BNK-0094, ACH credit 2026-08-21, +24,975.14) but TWO ledger entries (GL-0090 and GL-0091), both dated 2026-08-20, both for +24,975.14, both with identical counterparty and description. The matcher already paired BNK-0094 with GL-0090, leaving GL-0091 unmatched with no bank line to support it. Total cash recorded in the ledger for this invoice is 49,950.28 versus 24,975.14 actually received at the bank.\\n\\nThis is not a timing difference: there is no second receipt pending, because the invoice's total amount due (24,975.14) was fully settled by the single ACH credit, so no further payment on this reference can be expected. It is a straightforward double-posting of the same receipt.\\n\\nProposed fix: reverse the duplicate entry GL-0091 by crediting Cash 24,975.14 (removing the overstated cash) and debiting Accounts Receivable 24,975.14 (restoring the AR that was wrongly relieved twice). This leaves the ledger reflecting one receipt of 24,975.14, agreeing with BNK-0094, and AR for INV-1031 correctly cleared once.",
+            "lines": [
+              {
+                "account": "1200 Accounts Receivable",
+                "debit": 24975.14,
+                "memo": "Reverse duplicate receipt GL-0091 - restore AR for INV-1031 (Abbott-Munoz)"
+              },
+              {
+                "account": "1000 Cash - Operating",
+                "credit": 24975.14,
+                "memo": "Reverse duplicate cash posting GL-0091 - only BNK-0094 received"
+              }
+            ]
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"proposal_id\": \"PROP-B04461E2\",\n  \"status\": \"pending_human_approval\",\n  \"case_id\": \"CASE-012\",\n  \"message\": \"Recorded for human review. Nothing has been posted to the ledger.\"\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 5,
+      "stop_reason": "end_turn",
+      "model_seconds": 606.06,
+      "cost_usd": 0.05986000000000001,
+      "thinking": [],
+      "text": [
+        "## Summary\n\n**Case CASE-012 \u2014 classified as `duplicate`** (proposal `PROP-B04461E2`, pending human approval; nothing has been posted).\n\n**What I found**\n\nThe reference INV-1031 appears **once at the bank but twice in the ledger**:\n\n| Side | ID | Date | Amount | Status |\n|---|---|---|---|---|\n| Bank | BNK-0094 | 2026-08-21 | +24,975.14 | matched \u2192 GL-0090 |\n| Ledger | GL-0090 | 2026-08-20 | +24,975.14 | matched \u2192 BNK-0094 |\n| Ledger | GL-0091 | 2026-08-20 | +24,975.14 | **exception (this case)** |\n\nGL-0090 and GL-0091 are identical in date, amount, counterparty (Abbott-Munoz) and description. The invoice DOC-029 shows total amount due of USD 24,975.14, which the single ACH credit settled in full \u2014 so no second receipt is outstanding. That rules out a timing difference: the ledger simply records 49,950.28 of cash against a 24,975.14 invoice.\n\n**Proposed fix** \u2014 reverse the duplicate posting GL-0091:\n- Dr 1200 Accounts Receivable 24,975.14\n- Cr 1000 Cash - Operating 24,975.14\n\nThis brings recorded cash back in line with BNK-0094 and leaves AR for INV-1031 relieved exactly once.\n\n**Confidence:** high. The only mild caveat worth flagging to the reviewer is that the two ledger entries are indistinguishable from each other, so the choice to reverse GL-0091 rather than GL-0090 is arbitrary \u2014 it's simply the one the matcher left unpaired, and the net effect on the accounts is the same either way."
+      ],
+      "tool_calls": [],
+      "tool_results": []
+    }
+  ]
+}

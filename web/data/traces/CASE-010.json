@@ -1,0 +1,138 @@
+{
+  "case_id": "CASE-010",
+  "status": "completed",
+  "latency_seconds": 625.61,
+  "totals": {
+    "input_tokens": 8,
+    "output_tokens": 1533,
+    "cache_write_tokens": 10727,
+    "cache_read_tokens": 9348,
+    "cost_usd": 0.110083,
+    "tool_calls": 4,
+    "tool_errors": 0
+  },
+  "final_summary": "## Summary\n\n**Classification: amount_mismatch**\n\n**What I found**\n- CASE-010 has both sides for reference BILL-5044 (Baker and Sons, ACH vendor payment).\n- Bank **BNK-0084**: \u22124,369.74 on 2026-08-19.\n- Ledger **GL-0078**: \u22124,396.74 on 2026-08-17 \u2192 bank-minus-ledger difference of **+27.00**.\n- Vendor bill **DOC-027**: amount due **USD 4,369.74**, which matches the bank, confirming the ledger figure is the erroneous one (digits 9 and 6 transposed).\n- Only one bank line and one ledger entry carry this reference (not a duplicate); USD with no FX rate (not FX); it cleared within the statement period (not timing). The 2-day date gap is ordinary ACH settlement lag.\n\n**Proposed fix (pending human approval \u2014 nothing posted)**\n- Debit 1000 Cash - Operating 27.00\n- Credit 2000 Accounts Payable 27.00\n\nThis reduces the recorded cash outflow to the 4,369.74 actually paid and reverses the matching over-debit of AP, leaving BILL-5044 fully settled.",
+  "steps": [
+    {
+      "step": 1,
+      "stop_reason": "tool_use",
+      "model_seconds": 1.97,
+      "cost_usd": 0.027085000000000005,
+      "thinking": [],
+      "text": [
+        "I'll start by pulling the case details."
+      ],
+      "tool_calls": [
+        {
+          "id": "toolu_0139n2Gz9WfENTH1eHJbozJp",
+          "name": "get_exception_case",
+          "input": {
+            "case_id": "CASE-010"
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"case_id\": \"CASE-010\",\n  \"case_shape\": \"both_sides\",\n  \"reference\": \"BILL-5044\",\n  \"case_date\": \"2026-08-19\",\n  \"bank_txn_id\": \"BNK-0084\",\n  \"bank_date\": \"2026-08-19\",\n  \"bank_description\": \"ACH DEBIT BAKER AND SONS\",\n  \"bank_amount\": -4369.74,\n  \"gl_entry_id\": \"GL-0078\",\n  \"ledger_date\": \"2026-08-17\",\n  \"ledger_counterparty\": \"Baker and Sons\",\n  \"ledger_description\": \"Vendor payment - Baker and Sons - BILL-5044\",\n  \"ledger_amount\": -4396.74,\n  \"ledger_currency\": \"USD\",\n  \"ledger_foreign_amount\": null,\n  \"ledger_fx_rate\": null,\n  \"amount_difference\": 27.0,\n  \"reference_matched_elsewhere\": false\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 2,
+      "stop_reason": "tool_use",
+      "model_seconds": 3.97,
+      "cost_usd": 0.0082755,
+      "thinking": [
+        "The ledger shows -4396.74 versus the bank's -4369.74, a difference that looks like a digit transposition. I should check the source documents and rows to pinpoint where the numbers diverge.\n\n"
+      ],
+      "text": [],
+      "tool_calls": [
+        {
+          "id": "toolu_01Kog1CoFPEJzdTz6EbbUi9t",
+          "name": "find_transactions_by_reference",
+          "input": {
+            "reference": "BILL-5044"
+          }
+        },
+        {
+          "id": "toolu_014zdXENLN4iYb787477anSw",
+          "name": "get_documents_for_reference",
+          "input": {
+            "reference": "BILL-5044"
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"reference\": \"BILL-5044\",\n  \"bank_transaction_count\": 1,\n  \"ledger_entry_count\": 1,\n  \"bank_transactions\": [\n    {\n      \"bank_txn_id\": \"BNK-0084\",\n      \"value_date\": \"2026-08-19\",\n      \"description\": \"ACH DEBIT BAKER AND SONS\",\n      \"reference\": \"BILL-5044\",\n      \"amount\": -4369.74,\n      \"direction\": \"outflow\",\n      \"channel\": \"ach\",\n      \"match_status\": \"exception\",\n      \"matched_to_gl_entry_id\": null,\n      \"exception_case_id\": \"CASE-010\"\n    }\n  ],\n  \"ledger_entries\": [\n    {\n      \"gl_entry_id\": \"GL-0078\",\n      \"posting_date\": \"2026-08-17\",\n      \"counterparty\": \"Baker and Sons\",\n      \"description\": \"Vendor payment - Baker and Sons - BILL-5044\",\n      \"reference\": \"BILL-5044\",\n      \"amount\": -4396.74,\n      \"direction\": \"outflow\",\n      \"currency\": \"USD\",\n      \"foreign_amount\": null,\n      \"fx_rate\": null,\n      \"match_status\": \"exception\",\n      \"matched_to_bank_txn_id\": null,\n      \"exception_case_id\": \"CASE-010\"\n    }\n  ]\n}",
+          "truncated": false
+        },
+        {
+          "is_error": false,
+          "text": "{\n  \"reference\": \"BILL-5044\",\n  \"count\": 1,\n  \"documents\": [\n    {\n      \"doc_id\": \"DOC-027\",\n      \"doc_type\": \"vendor_bill\",\n      \"primary_reference\": \"BILL-5044\",\n      \"content\": \"DOCUMENT: Vendor bill\\nBill number: BILL-5044\\nVendor: Baker and Sons\\nIssue date: 2026-07-15\\nDue date: 2026-08-14\\nAmount due: USD 4,369.74\\nTerms: Net 30\\n\"\n    }\n  ]\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 3,
+      "stop_reason": "tool_use",
+      "model_seconds": 613.82,
+      "cost_usd": 0.05566,
+      "thinking": [
+        "I'm noticing the ledger recorded 4,396.74 but the actual bill and bank payment were both 4,369.74 \u2014 a $27 transposition error, meaning cash and AP were both overstated by that amount, so the fix is to debit Cash $27 and credit AP $27.\n\n"
+      ],
+      "text": [],
+      "tool_calls": [
+        {
+          "id": "toolu_0175mHa8UbAkq7KveLxRNJcb",
+          "name": "propose_journal_entry",
+          "input": {
+            "case_id": "CASE-010",
+            "classification": "amount_mismatch",
+            "evidence": [
+              "BNK-0084",
+              "GL-0078",
+              "DOC-027"
+            ],
+            "explanation": "Same transaction on both sides: BILL-5044, Baker and Sons, ACH vendor payment. The bank debited 4,369.74 on 2026-08-19 (BNK-0084); the ledger recorded 4,396.74 on 2026-08-17 (GL-0078), a difference of 27.00 (bank minus ledger). The vendor bill DOC-027 states the amount due is USD 4,369.74, which agrees with the bank, so the ledger amount is wrong \u2014 a digit transposition (4,396.74 vs 4,369.74). Only one bank line and one ledger entry carry this reference, so this is not a duplicate; the currency is USD with no FX rate, so it is not an FX difference; the payment did clear within the statement period, so it is not a timing difference. Correcting entry reduces the recorded cash outflow by 27.00 and reverses the corresponding 27.00 over-debit of Accounts Payable, bringing the ledger to the actual 4,369.74 paid and leaving BILL-5044 fully settled. The 2-day date difference (ledger 08-17 vs bank 08-19) is normal ACH settlement lag and needs no entry.",
+            "lines": [
+              {
+                "account": "1000 Cash - Operating",
+                "debit": 27.0,
+                "memo": "Correct overstated ACH payment for BILL-5044 (recorded 4,396.74; bank cleared 4,369.74)"
+              },
+              {
+                "account": "2000 Accounts Payable",
+                "credit": 27.0,
+                "memo": "Reverse over-debit of AP on Baker and Sons BILL-5044"
+              }
+            ]
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"proposal_id\": \"PROP-C32FF1FD\",\n  \"status\": \"pending_human_approval\",\n  \"case_id\": \"CASE-010\",\n  \"message\": \"Recorded for human review. Nothing has been posted to the ledger.\"\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 4,
+      "stop_reason": "end_turn",
+      "model_seconds": 5.62,
+      "cost_usd": 0.019062250000000003,
+      "thinking": [],
+      "text": [
+        "## Summary\n\n**Classification: amount_mismatch**\n\n**What I found**\n- CASE-010 has both sides for reference BILL-5044 (Baker and Sons, ACH vendor payment).\n- Bank **BNK-0084**: \u22124,369.74 on 2026-08-19.\n- Ledger **GL-0078**: \u22124,396.74 on 2026-08-17 \u2192 bank-minus-ledger difference of **+27.00**.\n- Vendor bill **DOC-027**: amount due **USD 4,369.74**, which matches the bank, confirming the ledger figure is the erroneous one (digits 9 and 6 transposed).\n- Only one bank line and one ledger entry carry this reference (not a duplicate); USD with no FX rate (not FX); it cleared within the statement period (not timing). The 2-day date gap is ordinary ACH settlement lag.\n\n**Proposed fix (pending human approval \u2014 nothing posted)**\n- Debit 1000 Cash - Operating 27.00\n- Credit 2000 Accounts Payable 27.00\n\nThis reduces the recorded cash outflow to the 4,369.74 actually paid and reverses the matching over-debit of AP, leaving BILL-5044 fully settled."
+      ],
+      "tool_calls": [],
+      "tool_results": []
+    }
+  ]
+}

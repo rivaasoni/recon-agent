@@ -7,6 +7,11 @@
 An AI agent that investigates **bank reconciliation exceptions**, classifies them,
 proposes a correcting journal entry, and **waits for a human to approve it**.
 
+### ▶ [Live demo: recon-agent-zeta.vercel.app](https://recon-agent-zeta.vercel.app)
+
+All 16 exceptions with the agent's full reasoning traces and the evaluation results.
+The demo is static and read-only: it serves pre-computed results and never calls a model.
+
 Deterministic rules clear the easy matches between a bank statement and a general
 ledger. Only what's left over — the genuine exceptions — reaches the agent, which
 investigates with tools, cites its evidence, and drafts a fix. Every step is logged,

@@ -1,0 +1,167 @@
+{
+  "case_id": "CASE-005",
+  "status": "completed",
+  "latency_seconds": 30.48,
+  "totals": {
+    "input_tokens": 8,
+    "output_tokens": 2164,
+    "cache_write_tokens": 7530,
+    "cache_read_tokens": 14827,
+    "cost_usd": 0.108616,
+    "tool_calls": 6,
+    "tool_errors": 0
+  },
+  "final_summary": "## Summary\n\n**Case CASE-005 \u2014 classified as `fx_difference`**\n\n**What happened:** The same vendor payment appears on both sides, but the ledger used a different exchange rate than the bank.\n\n| | Foreign amount | Rate | USD |\n|---|---|---|---|\n| Ledger GL-0053 (2026-08-11) | EUR 3,812.11 | 1.1000 | \u22124,193.32 |\n| Bank BNK-0054 (2026-08-12) | EUR 3,812.11 | 1.1197 | \u22124,268.42 |\n| Difference | \u2014 | \u2014 | **\u221275.10** |\n\n**Key evidence:**\n- **DOC-003** (vendor bill): EUR 3,812.11 due to Ross, Robinson and Bright \u2014 confirms the correct foreign-currency amount.\n- **DOC-025** (bank wire confirmation): EUR 3,812.11 sent at rate 1.1197, USD 4,268.42 debited \u2014 independently corroborates the bank line.\n- **BILL-5058** appears exactly once at the bank and once in the ledger, and is not matched elsewhere \u2014 ruling out duplicate or timing explanations. The identical EUR amount rules out a wrong-amount posting; only the rate differs.\n\n**Proposed fix (pending human approval \u2014 nothing has been posted):** Debit 7100 FX Gain/Loss 75.10 / Credit 1000 Cash - Operating 75.10, recognising the unfavourable rate movement and bringing recorded cash in line with the USD 4,268.42 actually debited.\n\n**One flag for the reviewer:** DOC-025 mentions a separate USD 35.00 wire fee debited independently. It is outside this case's bank line and ledger entry, so I deliberately excluded it; if it surfaces as its own unreconciled bank line, it should be resolved under a separate case.",
+  "steps": [
+    {
+      "step": 1,
+      "stop_reason": "tool_use",
+      "model_seconds": 2.28,
+      "cost_usd": 0.027085000000000005,
+      "thinking": [],
+      "text": [
+        "I'll start by pulling the case details."
+      ],
+      "tool_calls": [
+        {
+          "id": "toolu_01GWiDeNVuACdHjwPu7cppkz",
+          "name": "get_exception_case",
+          "input": {
+            "case_id": "CASE-005"
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"case_id\": \"CASE-005\",\n  \"case_shape\": \"both_sides\",\n  \"reference\": \"BILL-5058\",\n  \"case_date\": \"2026-08-12\",\n  \"bank_txn_id\": \"BNK-0054\",\n  \"bank_date\": \"2026-08-12\",\n  \"bank_description\": \"INTL WIRE OUT ROSS, ROBINSON AND BRIGHT EUR 3,812.11 @1.1197\",\n  \"bank_amount\": -4268.42,\n  \"gl_entry_id\": \"GL-0053\",\n  \"ledger_date\": \"2026-08-11\",\n  \"ledger_counterparty\": \"Ross, Robinson and Bright\",\n  \"ledger_description\": \"Vendor payment - Ross, Robinson and Bright - BILL-5058 (EUR 3,812.11 @ 1.1000)\",\n  \"ledger_amount\": -4193.32,\n  \"ledger_currency\": \"EUR\",\n  \"ledger_foreign_amount\": 3812.11,\n  \"ledger_fx_rate\": 1.1,\n  \"amount_difference\": -75.1,\n  \"reference_matched_elsewhere\": false\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 2,
+      "stop_reason": "tool_use",
+      "model_seconds": 4.17,
+      "cost_usd": 0.012156750000000001,
+      "thinking": [
+        "There's a clear FX difference here, so I should gather supporting evidence to confirm it.\n\n"
+      ],
+      "text": [
+        "Both sides exist with an FX rate discrepancy. Let me verify the underlying rows and documents."
+      ],
+      "tool_calls": [
+        {
+          "id": "toolu_011i5fyUPF7g93J9agXfUAMc",
+          "name": "get_bank_transaction",
+          "input": {
+            "bank_txn_id": "BNK-0054"
+          }
+        },
+        {
+          "id": "toolu_017iTGU8DKxqW89RvVxfgLmJ",
+          "name": "get_ledger_entry",
+          "input": {
+            "gl_entry_id": "GL-0053"
+          }
+        },
+        {
+          "id": "toolu_01F7om2PzX7KcsVYwGfvgjXZ",
+          "name": "find_transactions_by_reference",
+          "input": {
+            "reference": "BILL-5058"
+          }
+        },
+        {
+          "id": "toolu_01TAPMjB2LDutBdmhkZk7YKf",
+          "name": "get_documents_for_reference",
+          "input": {
+            "reference": "BILL-5058"
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"bank_txn_id\": \"BNK-0054\",\n  \"value_date\": \"2026-08-12\",\n  \"description\": \"INTL WIRE OUT ROSS, ROBINSON AND BRIGHT EUR 3,812.11 @1.1197\",\n  \"reference\": \"BILL-5058\",\n  \"amount\": -4268.42,\n  \"direction\": \"outflow\",\n  \"channel\": \"intl_wire\",\n  \"match_status\": \"exception\",\n  \"matched_to_gl_entry_id\": null,\n  \"exception_case_id\": \"CASE-005\"\n}",
+          "truncated": false
+        },
+        {
+          "is_error": false,
+          "text": "{\n  \"gl_entry_id\": \"GL-0053\",\n  \"posting_date\": \"2026-08-11\",\n  \"counterparty\": \"Ross, Robinson and Bright\",\n  \"description\": \"Vendor payment - Ross, Robinson and Bright - BILL-5058 (EUR 3,812.11 @ 1.1000)\",\n  \"reference\": \"BILL-5058\",\n  \"amount\": -4193.32,\n  \"direction\": \"outflow\",\n  \"currency\": \"EUR\",\n  \"foreign_amount\": 3812.11,\n  \"fx_rate\": 1.1,\n  \"match_status\": \"exception\",\n  \"matched_to_bank_txn_id\": null,\n  \"exception_case_id\": \"CASE-005\"\n}",
+          "truncated": false
+        },
+        {
+          "is_error": false,
+          "text": "{\n  \"reference\": \"BILL-5058\",\n  \"bank_transaction_count\": 1,\n  \"ledger_entry_count\": 1,\n  \"bank_transactions\": [\n    {\n      \"bank_txn_id\": \"BNK-0054\",\n      \"value_date\": \"2026-08-12\",\n      \"description\": \"INTL WIRE OUT ROSS, ROBINSON AND BRIGHT EUR 3,812.11 @1.1197\",\n      \"reference\": \"BILL-5058\",\n      \"amount\": -4268.42,\n      \"direction\": \"outflow\",\n      \"channel\": \"intl_wire\",\n      \"match_status\": \"exception\",\n      \"matched_to_gl_entry_id\": null,\n      \"exception_case_id\": \"CASE-005\"\n    }\n  ],\n  \"ledger_entries\": [\n    {\n      \"gl_entry_id\": \"GL-0053\",\n      \"posting_date\": \"2026-08-11\",\n      \"counterparty\": \"Ross, Robinson and Bright\",\n      \"description\": \"Vendor payment - Ross, Robinson and Bright - BILL-5058 (EUR 3,812.11 @ 1.1000)\",\n      \"reference\": \"BILL-5058\",\n      \"amount\": -4193.32,\n      \"direction\": \"outflow\",\n      \"currency\": \"EUR\",\n      \"foreign_amount\": 3812.11,\n      \"fx_rate\": 1.1,\n      \"match_status\": \"exception\",\n      \"matched_to_bank_txn_id\": null,\n      \"exception_case_id\": \"CASE-005\"\n    }\n  ]\n}",
+          "truncated": false
+        },
+        {
+          "is_error": false,
+          "text": "{\n  \"reference\": \"BILL-5058\",\n  \"count\": 2,\n  \"documents\": [\n    {\n      \"doc_id\": \"DOC-003\",\n      \"doc_type\": \"vendor_bill\",\n      \"primary_reference\": \"BILL-5058\",\n      \"content\": \"DOCUMENT: Vendor bill\\nBill number: BILL-5058\\nVendor: Ross, Robinson and Bright\\nIssue date: 2026-07-16\\nDue date: 2026-08-15\\nAmount due: EUR 3,812.11\\nTerms: Net 30\\n\"\n    },\n    {\n      \"doc_id\": \"DOC-025\",\n      \"doc_type\": \"wire_confirmation\",\n      \"primary_reference\": \"BILL-5058\",\n      \"content\": \"DOCUMENT: Fictional Community Bank \u2014 Outgoing International Wire Confirmation\\nValue date: 2026-08-12\\nBeneficiary: Ross, Robinson and Bright\\nPayment reference: BILL-5058\\nAmount sent: EUR 3,812.11\\nExchange rate applied: 1.1197\\nUSD debited from account: 4,268.42\\nWire fee: USD 35.00, debited separately\\n\"\n    }\n  ]\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 3,
+      "stop_reason": "tool_use",
+      "model_seconds": 14.54,
+      "cost_usd": 0.042821750000000006,
+      "thinking": [
+        "The FX rate applied (1.1197) versus the ledger rate (1.1000) creates a 75.10 discrepancy in the converted EUR amount, so I need a correcting entry debiting FX Gain/Loss 75.10 and crediting Cash 75.10. The separate $35 wire fee looks like it belongs to a different bank line item and isn't part of this reconciliation case, though I'll note it in case it needs follow-up.\n\n"
+      ],
+      "text": [
+        "Evidence is consistent. The foreign amount (EUR 3,812.11) is identical on both sides \u2014 only the rate differs (bank 1.1197 vs ledger 1.1000), giving 4,268.42 \u2212 4,193.32 = 75.10 extra cash out."
+      ],
+      "tool_calls": [
+        {
+          "id": "toolu_01E5Ai92Y69tZfPT7jaNdUTG",
+          "name": "propose_journal_entry",
+          "input": {
+            "case_id": "CASE-005",
+            "classification": "fx_difference",
+            "evidence": [
+              "BNK-0054",
+              "GL-0053",
+              "DOC-003",
+              "DOC-025"
+            ],
+            "explanation": "Same transaction on both sides, differing only by the exchange rate used. Vendor bill DOC-003 is for EUR 3,812.11 to Ross, Robinson and Bright (due 2026-08-15). Ledger entry GL-0053 (2026-08-11) records the payment of EUR 3,812.11 converted at 1.1000 = USD 4,193.32. Bank line BNK-0054 (value date 2026-08-12) shows the same EUR 3,812.11 wire, but the bank applied 1.1197, debiting USD 4,268.42; wire confirmation DOC-025 independently confirms EUR 3,812.11 at rate 1.1197 and USD 4,268.42 debited. The foreign-currency amount is identical on both sides and this is the only appearance of BILL-5058 in the bank and ledger data (no duplicate, no reference matched elsewhere), so this is not an amount-entry error or a timing issue \u2014 it is purely an FX rate difference of USD 75.10 (4,268.42 - 4,193.32), an unfavourable FX loss because the actual rate was higher than the booked rate. Proposed fix: debit 7100 FX Gain/Loss USD 75.10 and credit 1000 Cash - Operating USD 75.10, bringing the recorded cash outflow to the USD 4,268.42 the bank actually took. Note for the reviewer: DOC-025 also states a separate USD 35.00 wire fee was debited; that charge is not part of this case's bank line or ledger entry and is not included in this entry \u2014 if it appears as its own unreconciled bank line it should be handled under its own case.",
+            "lines": [
+              {
+                "account": "7100 FX Gain/Loss",
+                "debit": 75.1,
+                "memo": "FX loss on BILL-5058: EUR 3,812.11 settled at 1.1197 vs 1.1000 booked"
+              },
+              {
+                "account": "1000 Cash - Operating",
+                "credit": 75.1,
+                "memo": "Additional cash debited by bank on BNK-0054 (USD 4,268.42 vs 4,193.32 recorded)"
+              }
+            ]
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"proposal_id\": \"PROP-B5E3241C\",\n  \"status\": \"pending_human_approval\",\n  \"case_id\": \"CASE-005\",\n  \"message\": \"Recorded for human review. Nothing has been posted to the ledger.\"\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 4,
+      "stop_reason": "end_turn",
+      "model_seconds": 8.48,
+      "cost_usd": 0.0265525,
+      "thinking": [],
+      "text": [
+        "## Summary\n\n**Case CASE-005 \u2014 classified as `fx_difference`**\n\n**What happened:** The same vendor payment appears on both sides, but the ledger used a different exchange rate than the bank.\n\n| | Foreign amount | Rate | USD |\n|---|---|---|---|\n| Ledger GL-0053 (2026-08-11) | EUR 3,812.11 | 1.1000 | \u22124,193.32 |\n| Bank BNK-0054 (2026-08-12) | EUR 3,812.11 | 1.1197 | \u22124,268.42 |\n| Difference | \u2014 | \u2014 | **\u221275.10** |\n\n**Key evidence:**\n- **DOC-003** (vendor bill): EUR 3,812.11 due to Ross, Robinson and Bright \u2014 confirms the correct foreign-currency amount.\n- **DOC-025** (bank wire confirmation): EUR 3,812.11 sent at rate 1.1197, USD 4,268.42 debited \u2014 independently corroborates the bank line.\n- **BILL-5058** appears exactly once at the bank and once in the ledger, and is not matched elsewhere \u2014 ruling out duplicate or timing explanations. The identical EUR amount rules out a wrong-amount posting; only the rate differs.\n\n**Proposed fix (pending human approval \u2014 nothing has been posted):** Debit 7100 FX Gain/Loss 75.10 / Credit 1000 Cash - Operating 75.10, recognising the unfavourable rate movement and bringing recorded cash in line with the USD 4,268.42 actually debited.\n\n**One flag for the reviewer:** DOC-025 mentions a separate USD 35.00 wire fee debited independently. It is outside this case's bank line and ledger entry, so I deliberately excluded it; if it surfaces as its own unreconciled bank line, it should be resolved under a separate case."
+      ],
+      "tool_calls": [],
+      "tool_results": []
+    }
+  ]
+}

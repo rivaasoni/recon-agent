@@ -1,0 +1,207 @@
+{
+  "case_id": "CASE-004",
+  "status": "completed",
+  "latency_seconds": 34.22,
+  "totals": {
+    "input_tokens": 12,
+    "output_tokens": 2208,
+    "cache_write_tokens": 7675,
+    "cache_read_tokens": 27057,
+    "cost_usd": 0.116757,
+    "tool_calls": 7,
+    "tool_errors": 0
+  },
+  "final_summary": "## Summary\n\n**Case:** CASE-004 \u2014 ledger-only exception, GL-0047, James Group, BILL-5051, \u2212$11,541.85\n\n**Classification:** `duplicate`\n\n**Key evidence:**\n- `find_transactions_by_reference('BILL-5051')` returns **two ledger entries but only one bank line**.\n- **GL-0042** (2026-08-07, \u221211,541.85) is already matched to **BNK-0036** (ACH DEBIT JAMES GROUP, 2026-08-07, \u221211,541.85) \u2014 the bill was paid in full.\n- **GL-0047** (2026-08-10) is an identical \u221211,541.85 posting: same vendor, same reference, same description, no bank counterpart.\n- **DOC-028** (vendor bill) shows a single amount due of USD 11,541.85 \u2014 only one payment was ever owed.\n\n**Why not timing_difference:** an uncleared payment would need an outstanding obligation. The bill's full amount was already settled by BNK-0036, so there is nothing left for a second payment to clear.\n\n**Proposed fix (pending human approval, nothing posted):**\n\n| Account | Debit | Credit |\n|---|---|---|\n| 1000 Cash - Operating | 11,541.85 | |\n| 2000 Accounts Payable | | 11,541.85 |\n\nThis reverses the duplicate, restoring the cash wrongly shown as paid and reinstating the payable that was relieved twice.\n\n**Flagged for the reviewer:** the only residual uncertainty is whether a genuine second disbursement to James Group exists that clears after the 2026-08-31 statement cut-off. Nothing in the available bank, ledger or document data supports that, but it is the one scenario that would change the classification.",
+  "steps": [
+    {
+      "step": 1,
+      "stop_reason": "tool_use",
+      "model_seconds": 2.13,
+      "cost_usd": 0.027085000000000005,
+      "thinking": [],
+      "text": [
+        "I'll start by pulling the case details."
+      ],
+      "tool_calls": [
+        {
+          "id": "toolu_01FvYrj1yz6bVkZnwhMJ7eP8",
+          "name": "get_exception_case",
+          "input": {
+            "case_id": "CASE-004"
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"case_id\": \"CASE-004\",\n  \"case_shape\": \"ledger_only\",\n  \"reference\": \"BILL-5051\",\n  \"case_date\": \"2026-08-10\",\n  \"bank_txn_id\": null,\n  \"bank_date\": null,\n  \"bank_description\": null,\n  \"bank_amount\": null,\n  \"gl_entry_id\": \"GL-0047\",\n  \"ledger_date\": \"2026-08-10\",\n  \"ledger_counterparty\": \"James Group\",\n  \"ledger_description\": \"Vendor payment - James Group - BILL-5051\",\n  \"ledger_amount\": -11541.85,\n  \"ledger_currency\": \"USD\",\n  \"ledger_foreign_amount\": null,\n  \"ledger_fx_rate\": null,\n  \"amount_difference\": null,\n  \"reference_matched_elsewhere\": true\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 2,
+      "stop_reason": "tool_use",
+      "model_seconds": 3.18,
+      "cost_usd": 0.008781750000000001,
+      "thinking": [
+        "I notice BILL-5051 seems to be referenced elsewhere too, so I should check where else it appears.\n\n"
+      ],
+      "text": [
+        "Ledger-only, and the reference is matched elsewhere. Let me look at the full picture."
+      ],
+      "tool_calls": [
+        {
+          "id": "toolu_017ZSrSReCTvdHqMCc2Y8uyh",
+          "name": "find_transactions_by_reference",
+          "input": {
+            "reference": "BILL-5051"
+          }
+        },
+        {
+          "id": "toolu_018oyeeVsRSDf9fdfA63C6cA",
+          "name": "get_documents_for_reference",
+          "input": {
+            "reference": "BILL-5051"
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"reference\": \"BILL-5051\",\n  \"bank_transaction_count\": 1,\n  \"ledger_entry_count\": 2,\n  \"bank_transactions\": [\n    {\n      \"bank_txn_id\": \"BNK-0036\",\n      \"value_date\": \"2026-08-07\",\n      \"description\": \"ACH DEBIT JAMES GROUP\",\n      \"reference\": \"BILL-5051\",\n      \"amount\": -11541.85,\n      \"direction\": \"outflow\",\n      \"channel\": \"ach\",\n      \"match_status\": \"matched\",\n      \"matched_to_gl_entry_id\": \"GL-0042\",\n      \"exception_case_id\": null\n    }\n  ],\n  \"ledger_entries\": [\n    {\n      \"gl_entry_id\": \"GL-0042\",\n      \"posting_date\": \"2026-08-07\",\n      \"counterparty\": \"James Group\",\n      \"description\": \"Vendor payment - James Group - BILL-5051\",\n      \"reference\": \"BILL-5051\",\n      \"amount\": -11541.85,\n      \"direction\": \"outflow\",\n      \"currency\": \"USD\",\n      \"foreign_amount\": null,\n      \"fx_rate\": null,\n      \"match_status\": \"matched\",\n      \"matched_to_bank_txn_id\": \"BNK-0036\",\n      \"exception_case_id\": null\n    },\n    {\n      \"gl_entry_id\": \"GL-0047\",\n      \"posting_date\": \"2026-08-10\",\n      \"counterparty\": \"James Group\",\n      \"description\": \"Vendor payment - James Group - BILL-5051\",\n      \"reference\": \"BILL-5051\",\n      \"amount\": -11541.85,\n      \"direction\": \"outflow\",\n      \"currency\": \"USD\",\n      \"foreign_amount\": null,\n      \"fx_rate\": null,\n      \"match_status\": \"exception\",\n      \"matched_to_bank_txn_id\": null,\n      \"exception_case_id\": \"CASE-004\"\n    }\n  ]\n}",
+          "truncated": false
+        },
+        {
+          "is_error": false,
+          "text": "{\n  \"reference\": \"BILL-5051\",\n  \"count\": 1,\n  \"documents\": [\n    {\n      \"doc_id\": \"DOC-028\",\n      \"doc_type\": \"vendor_bill\",\n      \"primary_reference\": \"BILL-5051\",\n      \"content\": \"DOCUMENT: Vendor bill\\nBill number: BILL-5051\\nVendor: James Group\\nIssue date: 2026-07-17\\nDue date: 2026-08-16\\nAmount due: USD 11,541.85\\nTerms: Net 30\\n\"\n    }\n  ]\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 3,
+      "stop_reason": "tool_use",
+      "model_seconds": 4.27,
+      "cost_usd": 0.014961499999999999,
+      "thinking": [
+        "I'm seeing two ledger entries of the same amount but only one bank payment, and the vendor bill matches a single 11,541.85 amount \u2014 so GL-0047 looks like a duplicate. I want to confirm that and check if there's an AP payment run document mentioning James Group by searching the documents.\n\n"
+      ],
+      "text": [
+        "One bank payment, two identical ledger entries. Let me verify the details and check for any other supporting documents."
+      ],
+      "tool_calls": [
+        {
+          "id": "toolu_01AgeS4GayrY9yg2X1KGtwLs",
+          "name": "get_ledger_entry",
+          "input": {
+            "gl_entry_id": "GL-0047"
+          }
+        },
+        {
+          "id": "toolu_01VztqjaTa4hdbu8K3u4A7Ko",
+          "name": "search_documents",
+          "input": {
+            "keywords": "James Group"
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"gl_entry_id\": \"GL-0047\",\n  \"posting_date\": \"2026-08-10\",\n  \"counterparty\": \"James Group\",\n  \"description\": \"Vendor payment - James Group - BILL-5051\",\n  \"reference\": \"BILL-5051\",\n  \"amount\": -11541.85,\n  \"direction\": \"outflow\",\n  \"currency\": \"USD\",\n  \"foreign_amount\": null,\n  \"fx_rate\": null,\n  \"match_status\": \"exception\",\n  \"matched_to_bank_txn_id\": null,\n  \"exception_case_id\": \"CASE-004\"\n}",
+          "truncated": false
+        },
+        {
+          "is_error": false,
+          "text": "{\n  \"keywords\": [\n    \"james\",\n    \"group\"\n  ],\n  \"count\": 2,\n  \"documents\": [\n    {\n      \"doc_id\": \"DOC-009\",\n      \"doc_type\": \"vendor_bill\",\n      \"primary_reference\": \"BILL-5004\",\n      \"content\": \"DOCUMENT: Vendor bill\\nBill number: BILL-5004\\nVendor: James Group\\nIssue date: 2026-07-10\\nDue date: 2026-08-09\\nAmount due: USD 13,919.86\\nTerms: Net 30\\n\"\n    },\n    {\n      \"doc_id\": \"DOC-028\",\n      \"doc_type\": \"vendor_bill\",\n      \"primary_reference\": \"BILL-5051\",\n      \"content\": \"DOCUMENT: Vendor bill\\nBill number: BILL-5051\\nVendor: James Group\\nIssue date: 2026-07-17\\nDue date: 2026-08-16\\nAmount due: USD 11,541.85\\nTerms: Net 30\\n\"\n    }\n  ]\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 4,
+      "stop_reason": "tool_use",
+      "model_seconds": 6.96,
+      "cost_usd": 0.017502,
+      "thinking": [
+        "I confirm BNK-0036 matches GL-0042, and there's only one bank outflow, so GL-0047 is a duplicate ledger entry \u2014 only one bill (BILL-5051) for 11,541.85 was actually paid. To reverse it, I need to debit Cash and credit AP, undoing the original entry that credited cash and debited AP.\n\n"
+      ],
+      "text": [
+        "Evidence is clear. Let me confirm the bank side once more before proposing."
+      ],
+      "tool_calls": [
+        {
+          "id": "toolu_016ok4qxDKWDh38mR6Lmg9f9",
+          "name": "get_bank_transaction",
+          "input": {
+            "bank_txn_id": "BNK-0036"
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"bank_txn_id\": \"BNK-0036\",\n  \"value_date\": \"2026-08-07\",\n  \"description\": \"ACH DEBIT JAMES GROUP\",\n  \"reference\": \"BILL-5051\",\n  \"amount\": -11541.85,\n  \"direction\": \"outflow\",\n  \"channel\": \"ach\",\n  \"match_status\": \"matched\",\n  \"matched_to_gl_entry_id\": \"GL-0042\",\n  \"exception_case_id\": null\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 5,
+      "stop_reason": "tool_use",
+      "model_seconds": 9.55,
+      "cost_usd": 0.02529175,
+      "thinking": [],
+      "text": [],
+      "tool_calls": [
+        {
+          "id": "toolu_01AieJAR4qpx5xrb64dQVnzG",
+          "name": "propose_journal_entry",
+          "input": {
+            "case_id": "CASE-004",
+            "classification": "duplicate",
+            "evidence": [
+              "GL-0047",
+              "GL-0042",
+              "BNK-0036",
+              "DOC-028"
+            ],
+            "explanation": "BILL-5051 (James Group) carries two ledger entries but only one bank line. GL-0042 (2026-08-07, -11,541.85) is already matched to bank line BNK-0036 (ACH DEBIT JAMES GROUP, 2026-08-07, -11,541.85), which settles the bill in full. GL-0047 (2026-08-10) is a second, identical -11,541.85 posting for the same vendor, same reference and same description, with no corresponding bank line.\n\nThe vendor bill DOC-028 shows a single amount due of USD 11,541.85 for BILL-5051, so only one payment was ever owed and only one left the bank. There is no evidence of a second obligation or a second disbursement, so GL-0047 is a duplicate posting rather than a payment still in transit (a timing difference would require an unpaid amount due, which the bill does not show).\n\nProposed fix: reverse the duplicate entry \u2014 debit 1000 Cash - Operating 11,541.85 to restore the cash overstated as paid, and credit 2000 Accounts Payable 11,541.85 to undo the double relief of the vendor liability. Note: the vendor bill is dated 2026-07-17 with Net 30 terms; if the accountant has any record of a genuine second disbursement to James Group clearing after 2026-08-31, this should be re-examined before approval, but nothing in the available data supports that.",
+            "lines": [
+              {
+                "account": "1000 Cash - Operating",
+                "debit": 11541.85,
+                "memo": "Reverse duplicate payment posting GL-0047 for BILL-5051"
+              },
+              {
+                "account": "2000 Accounts Payable",
+                "credit": 11541.85,
+                "memo": "Reinstate James Group payable double-relieved by GL-0047"
+              }
+            ]
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"proposal_id\": \"PROP-9BB09EF3\",\n  \"status\": \"pending_human_approval\",\n  \"case_id\": \"CASE-004\",\n  \"message\": \"Recorded for human review. Nothing has been posted to the ledger.\"\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 6,
+      "stop_reason": "end_turn",
+      "model_seconds": 7.99,
+      "cost_usd": 0.023135250000000003,
+      "thinking": [],
+      "text": [
+        "## Summary\n\n**Case:** CASE-004 \u2014 ledger-only exception, GL-0047, James Group, BILL-5051, \u2212$11,541.85\n\n**Classification:** `duplicate`\n\n**Key evidence:**\n- `find_transactions_by_reference('BILL-5051')` returns **two ledger entries but only one bank line**.\n- **GL-0042** (2026-08-07, \u221211,541.85) is already matched to **BNK-0036** (ACH DEBIT JAMES GROUP, 2026-08-07, \u221211,541.85) \u2014 the bill was paid in full.\n- **GL-0047** (2026-08-10) is an identical \u221211,541.85 posting: same vendor, same reference, same description, no bank counterpart.\n- **DOC-028** (vendor bill) shows a single amount due of USD 11,541.85 \u2014 only one payment was ever owed.\n\n**Why not timing_difference:** an uncleared payment would need an outstanding obligation. The bill's full amount was already settled by BNK-0036, so there is nothing left for a second payment to clear.\n\n**Proposed fix (pending human approval, nothing posted):**\n\n| Account | Debit | Credit |\n|---|---|---|\n| 1000 Cash - Operating | 11,541.85 | |\n| 2000 Accounts Payable | | 11,541.85 |\n\nThis reverses the duplicate, restoring the cash wrongly shown as paid and reinstating the payable that was relieved twice.\n\n**Flagged for the reviewer:** the only residual uncertainty is whether a genuine second disbursement to James Group exists that clears after the 2026-08-31 statement cut-off. Nothing in the available bank, ledger or document data supports that, but it is the one scenario that would change the classification."
+      ],
+      "tool_calls": [],
+      "tool_results": []
+    }
+  ]
+}

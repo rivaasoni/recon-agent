@@ -1,0 +1,182 @@
+{
+  "case_id": "CASE-003",
+  "status": "completed",
+  "latency_seconds": 31.54,
+  "totals": {
+    "input_tokens": 10,
+    "output_tokens": 1991,
+    "cache_write_tokens": 7093,
+    "cache_read_tokens": 20035,
+    "cost_usd": 0.104174,
+    "tool_calls": 6,
+    "tool_errors": 0
+  },
+  "final_summary": "## Summary\n\n**Classification: amount_mismatch** \u2014 proposal `PROP-829E3039`, pending human approval (nothing posted).\n\n**What happened**\n- **BNK-0029** (2026-08-07): ACH credit from Williams and Sons, ref INV-1021, **+$7,678.07**\n- **GL-0017** (2026-08-05): same customer/reference, recorded as **+$6,778.07**\n- **DOC-011** (customer invoice INV-1021): amount due **USD 7,678.07**\n\nThe invoice corroborates the bank, so the bank amount is correct and the ledger is understated by exactly **$900.00**. The error pattern is a digit transposition \u2014 7,6**78**.07 keyed as 6,7**78**.07, cents unchanged.\n\n**Ruled out**\n- *Duplicate*: exactly one bank line and one ledger entry carry INV-1021; reference not matched elsewhere.\n- *FX*: ledger entry is USD with no foreign amount or rate.\n- *Timing*: the payment did clear within the August statement period. The 2-day gap (ledger 08-05 \u2192 bank 08-07) is ordinary ACH settlement lag and needs no entry of its own.\n\n**Proposed correction**\n| Account | Debit | Credit |\n|---|---|---|\n| 1000 Cash - Operating | 900.00 | |\n| 1200 Accounts Receivable | | 900.00 |\n\nThis brings the recorded receipt up to the $7,678.07 actually received and fully clears the INV-1021 receivable.\n\nOne note for the reviewer: the evidence here is unusually clean \u2014 invoice, bank line and difference all agree \u2014 so the only real judgement call is confirming with the customer/AR team that no separate $900 credit note or short-pay arrangement existed on INV-1021 that would instead make the ledger figure intentional. Nothing I retrieved suggests one.",
+  "steps": [
+    {
+      "step": 1,
+      "stop_reason": "tool_use",
+      "model_seconds": 2.24,
+      "cost_usd": 0.027085000000000005,
+      "thinking": [],
+      "text": [
+        "I'll start by pulling the case details."
+      ],
+      "tool_calls": [
+        {
+          "id": "toolu_01VTFdbZ5bRL4NL1yNSdrmys",
+          "name": "get_exception_case",
+          "input": {
+            "case_id": "CASE-003"
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"case_id\": \"CASE-003\",\n  \"case_shape\": \"both_sides\",\n  \"reference\": \"INV-1021\",\n  \"case_date\": \"2026-08-07\",\n  \"bank_txn_id\": \"BNK-0029\",\n  \"bank_date\": \"2026-08-07\",\n  \"bank_description\": \"ACH CREDIT WILLIAMS AND SONS\",\n  \"bank_amount\": 7678.07,\n  \"gl_entry_id\": \"GL-0017\",\n  \"ledger_date\": \"2026-08-05\",\n  \"ledger_counterparty\": \"Williams and Sons\",\n  \"ledger_description\": \"Customer payment - Williams and Sons - INV-1021\",\n  \"ledger_amount\": 6778.07,\n  \"ledger_currency\": \"USD\",\n  \"ledger_foreign_amount\": null,\n  \"ledger_fx_rate\": null,\n  \"amount_difference\": 900.0,\n  \"reference_matched_elsewhere\": false\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 2,
+      "stop_reason": "tool_use",
+      "model_seconds": 3.72,
+      "cost_usd": 0.009725500000000002,
+      "thinking": [
+        "The bank shows 7678.07 versus the ledger's 6778.07, a 900 difference that looks like a digit transposition. I should check the supporting documents to confirm.\n\n"
+      ],
+      "text": [
+        "Difference of exactly $900.00, with digits transposed (7678.07 vs 6778.07). Let me check the supporting evidence."
+      ],
+      "tool_calls": [
+        {
+          "id": "toolu_01DaAsVmGPHKsszQxfBepGNL",
+          "name": "find_transactions_by_reference",
+          "input": {
+            "reference": "INV-1021"
+          }
+        },
+        {
+          "id": "toolu_01Sb8fXNfBm3PWEEMt2aszJY",
+          "name": "get_documents_for_reference",
+          "input": {
+            "reference": "INV-1021"
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"reference\": \"INV-1021\",\n  \"bank_transaction_count\": 1,\n  \"ledger_entry_count\": 1,\n  \"bank_transactions\": [\n    {\n      \"bank_txn_id\": \"BNK-0029\",\n      \"value_date\": \"2026-08-07\",\n      \"description\": \"ACH CREDIT WILLIAMS AND SONS\",\n      \"reference\": \"INV-1021\",\n      \"amount\": 7678.07,\n      \"direction\": \"inflow\",\n      \"channel\": \"ach\",\n      \"match_status\": \"exception\",\n      \"matched_to_gl_entry_id\": null,\n      \"exception_case_id\": \"CASE-003\"\n    }\n  ],\n  \"ledger_entries\": [\n    {\n      \"gl_entry_id\": \"GL-0017\",\n      \"posting_date\": \"2026-08-05\",\n      \"counterparty\": \"Williams and Sons\",\n      \"description\": \"Customer payment - Williams and Sons - INV-1021\",\n      \"reference\": \"INV-1021\",\n      \"amount\": 6778.07,\n      \"direction\": \"inflow\",\n      \"currency\": \"USD\",\n      \"foreign_amount\": null,\n      \"fx_rate\": null,\n      \"match_status\": \"exception\",\n      \"matched_to_bank_txn_id\": null,\n      \"exception_case_id\": \"CASE-003\"\n    }\n  ]\n}",
+          "truncated": false
+        },
+        {
+          "is_error": false,
+          "text": "{\n  \"reference\": \"INV-1021\",\n  \"count\": 1,\n  \"documents\": [\n    {\n      \"doc_id\": \"DOC-011\",\n      \"doc_type\": \"customer_invoice\",\n      \"primary_reference\": \"INV-1021\",\n      \"content\": \"DOCUMENT: Customer invoice\\nInvoice number: INV-1021\\nCustomer: Williams and Sons\\nIssue date: 2026-06-27\\nDue date: 2026-07-27\\nAmount due: USD 7,678.07\\nTerms: Net 30\\n\"\n    }\n  ]\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 3,
+      "stop_reason": "tool_use",
+      "model_seconds": 5.48,
+      "cost_usd": 0.0143205,
+      "thinking": [
+        "The invoice and bank both show 7,678.07 but the ledger recorded only 6,778.07, a $900 shortfall \u2014 so I need a correcting entry debiting Cash and crediting AR for 900. Since there's just one bank line and one ledger entry, there's no duplication issue, and it's all USD so no FX concerns.\n\n"
+      ],
+      "text": [
+        "Evidence is consistent. Let me confirm there are no other related entries (e.g. a separate $900 posting)."
+      ],
+      "tool_calls": [
+        {
+          "id": "toolu_01AHttTnNA5Gg1rk9k4RZ54A",
+          "name": "search_documents",
+          "input": {
+            "keywords": "Williams and Sons"
+          }
+        },
+        {
+          "id": "toolu_01Tj5Zy34HUUxsRfKNMGW3kz",
+          "name": "get_bank_transaction",
+          "input": {
+            "bank_txn_id": "BNK-0029"
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"keywords\": [\n    \"williams\",\n    \"and\",\n    \"sons\"\n  ],\n  \"count\": 2,\n  \"documents\": [\n    {\n      \"doc_id\": \"DOC-011\",\n      \"doc_type\": \"customer_invoice\",\n      \"primary_reference\": \"INV-1021\",\n      \"content\": \"DOCUMENT: Customer invoice\\nInvoice number: INV-1021\\nCustomer: Williams and Sons\\nIssue date: 2026-06-27\\nDue date: 2026-07-27\\nAmount due: USD 7,678.07\\nTerms: Net 30\\n\"\n    },\n    {\n      \"doc_id\": \"DOC-018\",\n      \"doc_type\": \"customer_invoice\",\n      \"primary_reference\": \"INV-1045\",\n      \"content\": \"DOCUMENT: Customer invoice\\nInvoice number: INV-1045\\nCustomer: Williams and Sons\\nIssue date: 2026-06-30\\nDue date: 2026-07-30\\nAmount due: USD 14,096.09\\nTerms: Net 30\\n\"\n    }\n  ]\n}",
+          "truncated": false
+        },
+        {
+          "is_error": false,
+          "text": "{\n  \"bank_txn_id\": \"BNK-0029\",\n  \"value_date\": \"2026-08-07\",\n  \"description\": \"ACH CREDIT WILLIAMS AND SONS\",\n  \"reference\": \"INV-1021\",\n  \"amount\": 7678.07,\n  \"direction\": \"inflow\",\n  \"channel\": \"ach\",\n  \"match_status\": \"exception\",\n  \"matched_to_gl_entry_id\": null,\n  \"exception_case_id\": \"CASE-003\"\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 4,
+      "stop_reason": "tool_use",
+      "model_seconds": 10.49,
+      "cost_usd": 0.028540250000000003,
+      "thinking": [
+        "I'll flag this as an amount mismatch and suggest debiting Cash for 900 while crediting Accounts Receivable for the same amount.\n\n"
+      ],
+      "text": [
+        "Evidence is complete and unambiguous. Proposing the fix."
+      ],
+      "tool_calls": [
+        {
+          "id": "toolu_012bWqVw63UJ7ctbo7SNaqpJ",
+          "name": "propose_journal_entry",
+          "input": {
+            "case_id": "CASE-003",
+            "classification": "amount_mismatch",
+            "evidence": [
+              "BNK-0029",
+              "GL-0017",
+              "DOC-011"
+            ],
+            "explanation": "Same transaction on both sides (reference INV-1021, customer Williams and Sons), recorded in the ledger with the wrong amount. The bank received an ACH credit of USD 7,678.07 on 2026-08-07 (BNK-0029), and the customer invoice DOC-011 shows the amount due as USD 7,678.07 \u2014 so the bank figure is the correct one and the customer paid the invoice in full. The ledger entry GL-0017 (2026-08-05) records only USD 6,778.07, understating cash and the receipt against AR by exactly USD 900.00. The difference looks like a keying error: the digits 7,6 were transposed to 6,7 (7,678.07 vs 6,778.07), with the cents identical. This is not FX (the ledger entry is USD with no foreign amount or rate), not a duplicate (find_transactions_by_reference shows exactly one bank line and one ledger entry for INV-1021, and the reference is not matched elsewhere), and not a timing difference (the payment did clear the bank within the statement period). The 2-day date gap (ledger 08-05 vs bank 08-07) is normal ACH settlement lag and does not itself need a correction. Proposed fix: increase cash by USD 900.00 and reduce accounts receivable by the same amount, bringing GL-0017 up to the 7,678.07 actually received and fully clearing the INV-1021 receivable.",
+            "lines": [
+              {
+                "account": "1000 Cash - Operating",
+                "debit": 900.0,
+                "memo": "Correct understated customer receipt INV-1021 (BNK-0029 7,678.07 vs GL-0017 6,778.07)"
+              },
+              {
+                "account": "1200 Accounts Receivable",
+                "credit": 900.0,
+                "memo": "Clear remaining AR on INV-1021 - Williams and Sons"
+              }
+            ]
+          }
+        }
+      ],
+      "tool_results": [
+        {
+          "is_error": false,
+          "text": "{\n  \"proposal_id\": \"PROP-829E3039\",\n  \"status\": \"pending_human_approval\",\n  \"case_id\": \"CASE-003\",\n  \"message\": \"Recorded for human review. Nothing has been posted to the ledger.\"\n}",
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "step": 5,
+      "stop_reason": "end_turn",
+      "model_seconds": 9.5,
+      "cost_usd": 0.0245025,
+      "thinking": [],
+      "text": [
+        "## Summary\n\n**Classification: amount_mismatch** \u2014 proposal `PROP-829E3039`, pending human approval (nothing posted).\n\n**What happened**\n- **BNK-0029** (2026-08-07): ACH credit from Williams and Sons, ref INV-1021, **+$7,678.07**\n- **GL-0017** (2026-08-05): same customer/reference, recorded as **+$6,778.07**\n- **DOC-011** (customer invoice INV-1021): amount due **USD 7,678.07**\n\nThe invoice corroborates the bank, so the bank amount is correct and the ledger is understated by exactly **$900.00**. The error pattern is a digit transposition \u2014 7,6**78**.07 keyed as 6,7**78**.07, cents unchanged.\n\n**Ruled out**\n- *Duplicate*: exactly one bank line and one ledger entry carry INV-1021; reference not matched elsewhere.\n- *FX*: ledger entry is USD with no foreign amount or rate.\n- *Timing*: the payment did clear within the August statement period. The 2-day gap (ledger 08-05 \u2192 bank 08-07) is ordinary ACH settlement lag and needs no entry of its own.\n\n**Proposed correction**\n| Account | Debit | Credit |\n|---|---|---|\n| 1000 Cash - Operating | 900.00 | |\n| 1200 Accounts Receivable | | 900.00 |\n\nThis brings the recorded receipt up to the $7,678.07 actually received and fully clears the INV-1021 receivable.\n\nOne note for the reviewer: the evidence here is unusually clean \u2014 invoice, bank line and difference all agree \u2014 so the only real judgement call is confirming with the customer/AR team that no separate $900 credit note or short-pay arrangement existed on INV-1021 that would instead make the ledger figure intentional. Nothing I retrieved suggests one."
+      ],
+      "tool_calls": [],
+      "tool_results": []
+    }
+  ]
+}
