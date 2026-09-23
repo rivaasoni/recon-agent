@@ -1,48 +1,46 @@
-# web/ — the public demo site
+# web/ : the public demo site
 
-A static, read-only demo of the reconciliation agent's results. Plain HTML, CSS
-and JavaScript: no framework, no build step, no backend, and **no AI model call**,
-so the published site costs nothing to run and needs no API key.
+A read-only demo of the agent's results. Plain HTML, CSS and JavaScript. No framework,
+no build step, no backend, and it never calls an AI model, so the live site costs
+nothing to run and needs no API key.
 
 | File | What it is |
 |---|---|
-| `index.html` | Page structure: overview, the 16 exceptions, evaluation |
-| `styles.css` | All styling; colours are CSS variables with a dark-mode set |
-| `app.js` | Fetches the JSON in `data/` and renders it |
-| `data/` | Pre-computed results — **committed on purpose** (Vercel serves the repo) |
-| `vercel.json` | Cache headers for `data/`, plus two basic security headers |
+| `index.html` | The page: overview, the 16 exceptions, how well it did |
+| `styles.css` | All the styling. Colours are variables, with a dark mode set |
+| `app.js` | Loads the JSON in `data/` and puts it on the page |
+| `data/` | The results. These files are committed on purpose, because Vercel serves the repo |
+| `vercel.json` | Cache and security headers |
 
-## Regenerating the data
-
-After a new agent run:
+## Updating the data after a new run
 
 ```bash
-python -m recon.pipeline.refresh_analytics   # rebuild the warehouse + metrics
+python -m recon.pipeline.refresh_analytics   # rebuild the database and metrics
 python -m recon.pipeline.build_web_demo      # rewrite web/data/
 git add web/data && git commit -m "chore: refresh demo data" && git push
 ```
 
-Vercel redeploys on push.
+Vercel redeploys on every push.
 
-## Previewing locally
+## Looking at it locally
 
-Browsers block `fetch()` on `file://` pages, so opening `index.html` directly
-shows an empty page. Serve it instead:
+Browsers block JavaScript from loading files when you open a page directly, so
+double-clicking `index.html` shows an empty page. Serve it instead:
 
 ```bash
 cd web
 python -m http.server 8000     # then open http://localhost:8000
 ```
 
-## Notes on `vercel.json`
+## Notes on vercel.json
 
-JSON has no comments, so the reasoning lives here:
+JSON can't have comments, so the reasoning is here:
 
-- **`cleanUrls`** serves `/index.html` at `/`.
-- **`Cache-Control` on `/data/*`** — the data only changes when the repo is
-  pushed, so browsers cache it for 5 minutes and Vercel's CDN for an hour.
-- **`X-Content-Type-Options: nosniff`** stops browsers guessing a file's type.
-- **`Referrer-Policy`** limits what this site leaks to links it points at.
+- `cleanUrls` serves `index.html` at the root URL.
+- The cache header on `/data/*` lets browsers keep the files for 5 minutes and Vercel's
+  servers for an hour. The data only changes when I push.
+- `X-Content-Type-Options: nosniff` stops browsers guessing what a file is.
+- `Referrer-Policy` limits what gets passed on when someone clicks a link off the site.
 
-The site has no login and stores nothing about visitors; these headers are
-cheap good practice rather than a response to a specific risk.
+There's no login and nothing is stored about visitors. Those last two headers are just
+good practice.
