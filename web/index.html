@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Reconciliation Exceptions Agent — demo</title>
-<meta name="description" content="An AI agent that investigates bank reconciliation exceptions, proposes correcting journal entries, and waits for human approval. All data is synthetic.">
+<title>Bank Reconciliation Exceptions Agent</title>
+<meta name="description" content="An AI agent that investigates bank reconciliation exceptions, suggests a fix, and waits for a person to approve it. All data is fake.">
 <link rel="stylesheet" href="styles.css">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>🏦</text></svg>">
 </head>
@@ -12,12 +12,12 @@
 
 <header class="site-header">
   <div class="wrap">
-    <p class="badge">All data is synthetic — no real bank or customer information</p>
-    <h1>Reconciliation Exceptions Agent</h1>
+    <p class="badge">Everything here is fake data. No real bank or customer information.</p>
+    <h1>Bank Reconciliation Exceptions Agent</h1>
     <p class="tagline">
-      Rules clear the easy matches between a bank statement and a general ledger.
-      An AI agent investigates what's left, proposes a correcting journal entry,
-      and waits for a human to approve it.
+      Every month, accountants compare the bank's records with their company's own.
+      Plain rules match most lines. An AI agent investigates the ones that don't match,
+      suggests a fix, and waits for a person to approve it.
     </p>
     <p class="links">
       <a href="https://github.com/rivaasoni/recon-agent">Source on GitHub</a>
@@ -41,8 +41,9 @@
 
     <h2>Where the work goes</h2>
     <p class="note">
-      Each exception is money that doesn't line up between the bank and the ledger.
-      Not all of it needs fixing: timing differences clear by themselves next month.
+      Each exception is money that doesn't line up between the bank and the company's
+      records. Not all of it needs fixing. Timing differences sort themselves out next
+      month, so the right answer there is to wait.
     </p>
     <div class="table-scroll">
       <table id="break-types">
@@ -62,11 +63,11 @@
 
     <h2>How it works</h2>
     <ol class="steps">
-      <li><strong>Match what's obvious.</strong> Same reference, same amount, dates within a window — strictly one-to-one, so a duplicate posting can't hide inside a match.</li>
-      <li><strong>Investigate the rest.</strong> The agent queries the bank and ledger tables and searches supporting documents (invoices, wire confirmations, the bank's fee schedule) through a read-only tool server.</li>
-      <li><strong>Propose, never post.</strong> It drafts a balanced double-entry and records it as <em>pending</em>. No tool exists that could write to a ledger.</li>
-      <li><strong>A human decides.</strong> A reviewer sees the case, the entry, the evidence and the full reasoning before approving or rejecting.</li>
-      <li><strong>Grade every run.</strong> The data is generated with an answer key the agent never sees, and each run is scored on the classification <em>and</em> the entry's effect on cash.</li>
+      <li><strong>Match the obvious ones.</strong> Same invoice number, same amount, dates a few days apart. Each line can only be matched once, so a payment entered twice can't hide inside a match.</li>
+      <li><strong>Investigate the rest.</strong> The agent looks up the bank and ledger rows and searches the paperwork: invoices, wire confirmations, the bank's fee schedule. It can only read, never change anything.</li>
+      <li><strong>Suggest, don't post.</strong> It writes a fix and saves it as pending. There is no tool it could use to change the company's books.</li>
+      <li><strong>A person decides.</strong> The reviewer sees the case, the suggested fix, the evidence and all the agent's reasoning before approving or rejecting.</li>
+      <li><strong>Score every run.</strong> The data is made with an answer key the agent never sees. Each run is scored on both the type of problem and whether the fix moves the money by the right amount.</li>
     </ol>
   </section>
 
@@ -85,9 +86,9 @@
   <!-- ---------------------------------------------------------------- -->
   <section id="evaluation" class="tab-panel" role="tabpanel" hidden>
     <p class="note">
-      The data is generated with an answer key the agent never sees. Every run is
-      scored twice: the exception <strong>type</strong>, and whether the proposed
-      entry moves cash by the <strong>right amount</strong>, to the cent.
+      The data is made with an answer key the agent never sees. Every run is scored
+      twice: did it name the right <strong>type of problem</strong>, and does its
+      suggested fix move the money by the <strong>right amount</strong>, down to the cent?
     </p>
 
     <div id="eval-headline" class="metric-grid"></div>
@@ -109,25 +110,26 @@
 
     <h2>Confusion matrix</h2>
     <p class="note">
-      Rows are the true type, columns what the agent said. Correct answers sit on the
-      diagonal — anything off it is a specific mix-up to investigate.
+      Rows are what each problem really was. Columns are what the agent said. When it
+      got a case right, the number lands on the diagonal. Anything off the diagonal is a
+      mix-up worth looking into.
     </p>
     <div class="table-scroll"><table id="eval-confusion"><thead></thead><tbody></tbody></table></div>
 
-    <h2>How the grading works</h2>
+    <h2>How the scoring works</h2>
     <ol class="steps">
-      <li>The generator seeds exceptions of known type and writes an <strong>answer key</strong> to a folder that is never loaded into the warehouse the agent can query — a test enforces that.</li>
-      <li>The answer key and the agent's work use <strong>unrelated ID spaces</strong>, so nothing links them by accident. The grader joins them on the bank and ledger row IDs they share.</li>
-      <li>A correct label with the wrong amount counts as a <strong>failure</strong>: "fully correct" needs both.</li>
-      <li>Which expense or payable account to use is a judgement call, so the offset account is reported but never fails a case.</li>
+      <li>When the data is made, each hidden problem is written down in an answer key. That file is kept out of the database the agent can search, and a test checks it stays out.</li>
+      <li>The answer key and the agent's work use completely different ID numbers, so nothing can link them by accident. The scoring script matches them up using the bank and ledger rows they have in common.</li>
+      <li>Naming the right problem but suggesting the wrong amount still counts as wrong. To pass, a case needs both.</li>
+      <li>Which expense account to use is a matter of opinion, so I report whether it matched but don't count it against the agent.</li>
     </ol>
 
     <h2>How to read these numbers</h2>
     <ul class="caveats">
-      <li><strong>Small sample.</strong> 16 cases, 2–3 per type. One mistake moves a type's accuracy by 33–50%, so per-type figures point at what to investigate; they are not reliable rates.</li>
-      <li><strong>One run.</strong> Model output varies between runs; measuring stability needs repeats.</li>
-      <li><strong>Synthetic, tidy data.</strong> Every exception has decisive evidence reachable through the tools. Real statements bring partial payments, batched deposits and missing paperwork — none are represented here.</li>
-      <li><strong>The rules did the easy work first.</strong> Deterministic matching paired 114 of 125 bank lines, so the agent only saw genuine exceptions.</li>
+      <li><strong>It's a small test.</strong> 16 cases, two or three of each type. One wrong answer would drop a type from 100% to 50%, so these numbers show where to look rather than how often it's right.</li>
+      <li><strong>It's one run.</strong> AI output changes a bit each time. I'd need to run it several times to say anything about consistency.</li>
+      <li><strong>The data is made up and tidy.</strong> Every problem has clear evidence somewhere. Real bank statements have partial payments, one deposit covering several invoices, and missing paperwork. None of that is here.</li>
+      <li><strong>The rules did the easy work first.</strong> Plain matching handled 114 of 125 bank lines, so the agent only saw the genuinely tricky ones.</li>
     </ul>
 
     <p class="note">
@@ -141,8 +143,10 @@
 <footer class="site-footer">
   <div class="wrap">
     <p>
-      Python · DuckDB · dbt · MCP · Claude Opus 5 · Streamlit · pytest.
-      This page is static: it reads pre-computed results and never calls an AI model.
+      The project is built with Python, DuckDB, dbt, Claude Opus 5 and a Streamlit
+      app that accountants use to approve or reject each suggestion.
+      This page is not that app: it's plain HTML and JavaScript showing saved
+      results, so it never calls an AI model and costs nothing to visit.
     </p>
   </div>
 </footer>
